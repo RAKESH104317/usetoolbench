@@ -1,0 +1,66 @@
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    env_file:
+      - .env
+    environment:
+      APP_ENV: development
+      REDIS_URL: redis://redis:6379/0
+      STORAGE_ROOT: /app/storage
+      FILE_RETENTION_MINUTES: 60
+    volumes:
+      - ./storage:/app/storage
+      - ./api:/app/api
+    ports:
+      - "8000:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: uvicorn api.app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    env_file:
+      - .env
+    environment:
+      APP_ENV: development
+      REDIS_URL: redis://redis:6379/0
+      STORAGE_ROOT: /app/storage
+      FILE_RETENTION_MINUTES: 60
+    volumes:
+      - ./storage:/app/storage
+      - ./worker:/app/worker
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: celery -A worker.app.tasks worker --loglevel=info
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000/api/v1
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    command: npm run dev -- --host 0.0.0.0
+

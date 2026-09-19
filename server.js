@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const { config, toolCatalog } = require('./backend/config');
 const { apiRouter } = require('./backend/routes/api');
-const { renderHomePage, renderToolPage } = require('./frontend/pageRenderer');
+const { renderHomePage, renderToolPage, renderPdfEditorPage } = require('./frontend/pageRenderer');
 
 const app = express();
 
@@ -17,6 +17,10 @@ app.use('/api/v1', apiRouter);
 
 app.get('/', (req, res) => {
   res.send(renderHomePage());
+});
+
+app.get('/pdf-editor', (req, res) => {
+  res.send(renderPdfEditorPage());
 });
 
 app.get('/health', (req, res) => {

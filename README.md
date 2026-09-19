@@ -1,38 +1,65 @@
-# PDFPro SaaS Platform
+# PDFPro Open Source PDF SaaS
 
-A production-style PDF processing SaaS app with a responsive marketing homepage, conversion tool pages, backend API routes, job tracking, OCR-ready architecture, and local temporary storage.
+This repository contains a local open-source PDF processing stack built without any paid PDF API.
 
-## Included
+## Stack
 
-- Responsive frontend landing page and tool pages
-- Express REST API for PDF conversion workflow
-- Structured backend service layer
-- Storage helpers and job queue concepts
-- OCR and security modules for architecture-ready integration
-- Test coverage for config and validation flows
+- Frontend: React + TypeScript + Vite
+- API: FastAPI + Python
+- PDF tools: PyMuPDF, LibreOffice, OCRmyPDF, Tesseract, python-docx, openpyxl, Pillow
+- Background jobs: Celery + Redis
+- Storage: local filesystem with retention cleanup
 
-## Run locally
+## Docker Compose workflow
 
 ```bash
-npm install
 cp .env.example .env
-npm start
+docker compose up --build
 ```
 
-Open:
+Then open:
 
-- http://localhost:3000/
-- http://localhost:3000/pdf-to-word
-- http://localhost:3000/ocr-pdf
+- Frontend: http://localhost:5173
+- API docs: http://localhost:8000/docs
 
-## Project structure
+## API endpoints
 
-- `server.js` — Express entry point
-- `backend/` — API, config, jobs, conversion, validation, storage, OCR, security modules
-- `frontend/` — page rendering and static assets
-- `storage/` — temporary output files
-- `tests/` — backend validation and config checks
+- `POST /api/v1/files/upload`
+- `GET /api/v1/files/{file_id}`
+- `POST /api/v1/editor/export`
+- `POST /api/v1/pdf/merge`
+- `POST /api/v1/pdf/split`
+- `POST /api/v1/pdf/rotate`
+- `POST /api/v1/pdf/compress`
+- `POST /api/v1/pdf/ocr`
+- `POST /api/v1/pdf/to-word`
+- `POST /api/v1/pdf/to-excel`
+- `POST /api/v1/pdf/to-image`
+- `POST /api/v1/image/to-pdf`
+- `POST /api/v1/word/to-pdf`
+- `POST /api/v1/pdf/to-text`
+- `GET /api/v1/jobs/{job_id}`
+- `GET /api/v1/jobs/{job_id}/download`
+- `DELETE /api/v1/files/{file_id}`
+- `GET /api/v1/health`
+
+## Local processing flow
+
+Upload PDF
+→ FastAPI API
+→ worker task
+→ PDF operation
+→ output file
+→ job status
+→ secure download
+→ retention-based cleanup
+
+## Environment variables
+
+See `.env.example`.
 
 ## Notes
 
-This implementation is a realistic full-stack prototype for a document SaaS app. The conversion layer uses service stubs and local processed output files so the app is fully previewable in a local environment while keeping a clear upgrade path to production providers.
+- No paid API key is required.
+- All conversion work is performed with local open-source tooling.
+- Temporary files are cleaned after the configured retention window.

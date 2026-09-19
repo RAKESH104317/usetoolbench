@@ -1,0 +1,7 @@
+celery==5.4.0
+redis==5.0.8
+PyMuPDF==1.24.9
+python-docx==1.1.2
+openpyxl==3.1.5
+Pillow==10.4.0
+ocrmypdf==16.1.1

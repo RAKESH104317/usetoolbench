@@ -37,6 +37,7 @@ const toolCatalog = [
   { slug: 'merge-pdf', label: 'Merge PDF', path: '/merge-pdf', title: 'Merge PDF Files | PDFPro', description: 'Combine multiple PDF files in your preferred order with a simple drag-and-drop workflow.', category: 'tools' },
   { slug: 'split-pdf', label: 'Split PDF', path: '/split-pdf', title: 'Split PDF Files | PDFPro', description: 'Extract selected pages or split PDFs page-by-page into new documents.', category: 'tools' },
   { slug: 'compress-pdf', label: 'Compress PDF', path: '/compress-pdf', title: 'Compress PDF Files | PDFPro', description: 'Reduce the size of PDF files while keeping them usable for sharing and storage.', category: 'tools' },
+  { slug: 'pdf-editor', label: 'PDF Editor', path: '/pdf-editor', title: 'Online PDF Editor | PDFPro', description: 'Upload PDFs, edit text, annotate pages, and export a new document with a real browser-based editor.', category: 'tools' },
   { slug: 'edit-pdf', label: 'Edit PDF', path: '/edit-pdf', title: 'Edit PDF Online | PDFPro', description: 'Add text, comments, signatures, and annotations to PDF documents in a browser.', category: 'tools' },
   { slug: 'rotate-pdf', label: 'Rotate PDF', path: '/rotate-pdf', title: 'Rotate PDF Pages | PDFPro', description: 'Rotate PDF pages left or right in bulk with instant download.', category: 'tools' },
   { slug: 'pdf-to-text', label: 'PDF to Text', path: '/pdf-to-text', title: 'PDF to Text Converter | PDFPro', description: 'Extract text from PDF files and convert it into plain text or editable output.', category: 'conversion' },

@@ -146,4 +146,75 @@ function renderToolPage(tool) {
   });
 }
 
-module.exports = { renderHomePage, renderToolPage };
+function renderPdfEditorPage() {
+  return `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PDF Editor | PDFPro</title>
+    <meta name="description" content="Upload a PDF, edit text, annotate it, and export a new document in the browser." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/pdf-editor.css" />
+  </head>
+  <body class="pdf-editor-page">
+    <header class="editor-header">
+      <div class="editor-brand-wrap">
+        <a href="/" class="editor-brand">
+          <span class="brand-mark">P</span>
+          <span>PDFPro</span>
+        </a>
+      </div>
+      <div class="editor-header-actions">
+        <button id="prevPageBtn" type="button" class="editor-tool-btn">Previous</button>
+        <span id="pageIndicator">Page 0 / 0</span>
+        <button id="nextPageBtn" type="button" class="editor-tool-btn">Next</button>
+        <button id="zoomOutBtn" type="button" class="editor-tool-btn">-</button>
+        <button id="zoomInBtn" type="button" class="editor-tool-btn">+</button>
+        <button id="downloadPdfBtn" type="button" class="primary-btn">Download PDF</button>
+      </div>
+    </header>
+
+    <main class="editor-shell">
+      <aside class="editor-sidebar">
+        <div class="upload-box">
+          <label class="upload-trigger" for="pdfUploadInput">Upload a PDF</label>
+          <input id="pdfUploadInput" type="file" accept="application/pdf" />
+        </div>
+
+        <div class="tool-panel">
+          <h3>Tools</h3>
+          <div class="tool-list">
+            <button data-tool="select" class="tool-button active" type="button">Select</button>
+            <button data-tool="text" class="tool-button" type="button">Add Text</button>
+            <button data-tool="highlight" class="tool-button" type="button">Highlight</button>
+            <button data-tool="draw" class="tool-button" type="button">Draw</button>
+          </div>
+        </div>
+
+        <div class="page-thumbs-panel">
+          <h3>Pages</h3>
+          <div id="thumbList" class="thumb-list"></div>
+        </div>
+      </aside>
+
+      <section class="editor-canvas-panel">
+        <div class="canvas-empty" id="emptyState">
+          <h1>Edit PDF Online</h1>
+          <p>Upload a PDF to start editing.</p>
+        </div>
+        <div class="canvas-wrap" id="canvasWrap" hidden>
+          <canvas id="pdfCanvas"></canvas>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="/assets/pdf-editor.js"></script>
+  </body>
+</html>`;
+}
+
+module.exports = { renderHomePage, renderToolPage, renderPdfEditorPage };
