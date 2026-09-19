@@ -123,6 +123,9 @@ a { color: inherit; text-decoration: none; }
 }
 .status-box.success { background: rgba(87, 243, 209, 0.08); border-color: rgba(87, 243, 209, 0.25); color: var(--text); }
 .status-box.error { background: rgba(255, 90, 90, 0.08); border-color: rgba(255, 90, 90, 0.3); color: #ffd4d4; }
+.download-btn {
+  display: inline-flex; align-items: center; justify-content: center; margin-top: 12px; padding: 10px 16px; border-radius: 12px; background: linear-gradient(135deg, var(--primary), var(--primary-strong)); color: #06111c; font-weight: 700; text-decoration: none;
+}
 .info-panel { padding: 24px; }
 .info-panel ul { margin: 16px 0 0; padding-left: 18px; color: var(--muted); line-height: 1.8; }
 

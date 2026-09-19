@@ -1,8 +1,12 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const { config, toolCatalog } = require('../backend/config');
 const { validateFile } = require('../backend/services/validation');
+
+const scriptText = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'public', 'script.js'), 'utf8');
 
 test('config exposes default app settings', () => {
   assert.equal(typeof config.port, 'number');
@@ -21,4 +25,9 @@ test('validation rejects empty files and supports allowed extensions', () => {
 
   const valid = validateFile({ originalname: 'sample.pdf', size: 1024, mimetype: 'application/pdf' }, { allowedExtensions: ['.pdf'] });
   assert.equal(valid.valid, true);
+});
+
+test('conversion UI emits a real download button on success', () => {
+  assert.match(scriptText, /download=\"\$\{outputName\}\"/);
+  assert.match(scriptText, /class=\"download-btn\"/);
 });

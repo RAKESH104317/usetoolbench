@@ -33,10 +33,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         statusBox.className = 'status-box success';
+        const outputName = payload.outputFileName || 'converted-file';
         statusBox.innerHTML = `
           <strong>Conversion complete.</strong><br />
           ${payload.message}<br />
-          <a href="${payload.downloadUrl}" target="_blank" rel="noreferrer">Download output</a>
+          <a class="download-btn" href="${payload.downloadUrl}" download="${outputName}" target="_blank" rel="noreferrer">Download file</a>
         `;
       } catch (error) {
         statusBox.className = 'status-box error';
