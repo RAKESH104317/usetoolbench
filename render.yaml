@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: pdfpro-api
+    env: node
+    plan: free
+    region: oregon
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: CORS_ORIGIN
+        value: https://usetoolbench.in
+      - key: APP_URL
+        value: https://api.usetoolbench.in
+      - key: API_URL
+        value: https://api.usetoolbench.in/api/v1
+      - key: STORAGE_ROOT
+        value: /tmp/pdfpro-storage
