@@ -14,3 +14,13 @@ if (navToggle && header) {
     });
   });
 }
+
+const details = document.querySelectorAll('.faq-list details');
+details.forEach((item) => {
+  item.addEventListener('toggle', () => {
+    if (!item.open) return;
+    details.forEach((other) => {
+      if (other !== item) other.removeAttribute('open');
+    });
+  });
+});
