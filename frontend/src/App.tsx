@@ -18,7 +18,8 @@ const FALLBACK_DEALS:Deal[]=[
 ];
 const money=(n:number)=>`₹${Math.round(Number(n)).toLocaleString("en-IN")}`;
 const pct=(d:Deal)=>Math.round(Number(d.discount_percent)||((1-d.current_price/d.original_price)*100));
-const API_BASE=(import.meta.env.VITE_API_BASE_URL||"").replace(/\/$/,"");\nconst FEED_MODE=API_BASE?"LIVE API":"STARTER FEED";
+const API_BASE=(import.meta.env.VITE_API_BASE_URL||"").replace(/\/$/,"");
+const FEED_MODE=API_BASE?"LIVE API":"STARTER FEED";
 const img=(d:Deal)=>d.image_url||`https://api.microlink.io/?url=${encodeURIComponent(d.product_url)}&embed=image.url`;
 const filterAndSort=(source:Deal[],q:string,store:string,cat:string,min:number,coupon:boolean,sort:string)=>{let list=[...source];const needle=q.trim().toLowerCase();if(needle)list=list.filter(d=>(d.name+" "+(d.brand||"")+" "+d.category+" "+d.store).toLowerCase().includes(needle));if(store!=="All")list=list.filter(d=>d.store===store);if(cat)list=list.filter(d=>d.category===cat);if(min)list=list.filter(d=>pct(d)>=min);if(coupon)list=list.filter(d=>!!d.coupon_code);list.sort((a,b)=>sort==="price"?a.current_price-b.current_price:sort==="savings"?b.saved_amount-a.saved_amount:sort==="newest"?b.id-a.id:sort==="ending"?(new Date(a.expiry_at||"2999-12-31").getTime()-new Date(b.expiry_at||"2999-12-31").getTime()):pct(b)-pct(a));return list};
 function App(){
