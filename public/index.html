@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Fast, private PDF tools. Merge, split, rotate, compress and convert images to PDF.">
+<title>UseToolBench — PDF tools</title><link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="nav"><a class="brand" href="/"><span class="logo">U</span> UseToolBench</a><nav><a href="#tools">Tools</a><a href="#privacy">Privacy</a></nav></header>
+<main>
+<section class="hero"><div><p class="eyebrow">FAST • SIMPLE • PRIVATE</p><h1>PDF tools that just work.</h1><p class="lead">Merge, split, rotate, compress PDFs and turn images into PDF. No account required.</p><a class="primary" href="#tools">Choose a tool ↓</a></div><div class="hero-card"><div class="hero-icon">PDF</div><strong>Built for everyday documents</strong><span>Files are processed temporarily and automatically removed.</span></div></section>
+<section id="tools" class="tools"><div class="section-head"><div><p class="eyebrow">TOOLS</p><h2>Pick what you need</h2></div><span class="count">5 tools</span></div>
+<div class="grid">
+<button class="tool" data-tool="merge"><span class="tool-icon">＋</span><b>Merge PDF</b><small>Combine multiple PDFs</small></button>
+<button class="tool" data-tool="split"><span class="tool-icon">↗</span><b>Split PDF</b><small>Extract one page</small></button>
+<button class="tool" data-tool="rotate"><span class="tool-icon">↻</span><b>Rotate PDF</b><small>Rotate every page</small></button>
+<button class="tool" data-tool="compress"><span class="tool-icon">↓</span><b>Compress PDF</b><small>Reduce file overhead</small></button>
+<button class="tool" data-tool="image-to-pdf"><span class="tool-icon">▧</span><b>Images to PDF</b><small>JPG, PNG or WebP</small></button>
+</div></section>
+<section id="workspace" class="workspace hidden"><div class="section-head"><div><p class="eyebrow">WORKSPACE</p><h2 id="toolTitle">Merge PDF</h2></div><button id="close" class="ghost">Close</button></div>
+<form id="jobForm"><input id="tool" name="tool" type="hidden"><label class="drop" id="drop"><input id="files" name="files" type="file" multiple hidden><span class="upload-mark">↑</span><b>Drop files here</b><small>or click to browse • max 25 MB each</small></label><div id="options"></div><div id="selected"></div><button class="primary submit" type="submit">Process files</button></form><div id="status" class="status hidden"></div></section>
+<section id="privacy" class="privacy"><p class="eyebrow">PRIVACY</p><h2>Your documents don't become our library.</h2><p>Uploads are processed for the requested operation and temporary job files are automatically removed after one hour.</p></section>
+</main><footer>© 2026 UseToolBench <span>•</span> Built for useful work.</footer><script src="/app.js"></script>
+</body></html>
