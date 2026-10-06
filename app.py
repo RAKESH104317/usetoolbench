@@ -1,31 +1,30 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from pathlib import Path
-import os
+import os, uuid, sqlite3, re
+from datetime import datetime, timezone
 
-app = FastAPI(title="UseToolBench", version="2.0.0")
-BASE_DIR = Path(__file__).resolve().parent
+app=FastAPI(title="UseToolBench",version="2.0.0")
+BASE_DIR=Path(__file__).resolve().parent
+ROOT=Path(os.getenv("STORAGE_ROOT",str(BASE_DIR/"storage")))
+OUT=ROOT/"outputs"; UP=ROOT/"uploads"; DB=ROOT/"jobs.db"
+MAX=int(os.getenv("MAX_FILE_SIZE_MB","25"))*1024*1024
+TOOLS=[("merge","Merge PDF",".pdf",True),("split","Split PDF",".pdf",False),("rotate","Rotate PDF",".pdf",False),("compress","Compress PDF",".pdf",False),("pdf-to-text","PDF to Text",".pdf",False),("pdf-to-word","PDF to Word",".pdf",False),("pdf-to-excel","PDF to Excel",".pdf",False),("pdf-to-image","PDF to Images",".pdf",False),("image-to-pdf","Image to PDF",".png,.jpg,.jpeg",True),("word-to-pdf","Word to PDF",".docx",False),("ocr","OCR PDF",".pdf",False)]
+
+@app.on_event("startup")
+def startup():
+    UP.mkdir(parents=True,exist_ok=True);OUT.mkdir(parents=True,exist_ok=True)
+    with sqlite3.connect(DB) as db:
+        db.execute("CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY,operation TEXT,status TEXT,output TEXT,name TEXT,created TEXT,error TEXT)")
+        db.commit()
 
 @app.get("/health")
-def health():
-    return {"status":"ok","service":"usetoolbench","version":"2.0.0"}
+def health(): return {"status":"ok","service":"usetoolbench","version":"2.0.0"}
 
 @app.get("/api/tools")
-def tools():
-    return {"tools":[
-        {"id":"merge","name":"Merge PDF","accept":".pdf","multiple":True},
-        {"id":"split","name":"Split PDF","accept":".pdf","multiple":False},
-        {"id":"rotate","name":"Rotate PDF","accept":".pdf","multiple":False},
-        {"id":"compress","name":"Compress PDF","accept":".pdf","multiple":False},
-        {"id":"pdf-to-text","name":"PDF to Text","accept":".pdf","multiple":False},
-        {"id":"pdf-to-word","name":"PDF to Word","accept":".pdf","multiple":False},
-        {"id":"pdf-to-excel","name":"PDF to Excel","accept":".pdf","multiple":False},
-        {"id":"pdf-to-image","name":"PDF to Images","accept":".pdf","multiple":False},
-        {"id":"image-to-pdf","name":"Image to PDF","accept":".png,.jpg,.jpeg","multiple":True},
-        {"id":"word-to-pdf","name":"Word to PDF","accept":".docx","multiple":False},
-        {"id":"ocr","name":"OCR PDF","accept":".pdf","multiple":False}
-    ]}
+def tools(): return {"tools":[{"id":a,"name":b,"accept":c,"multiple":d} for a,b,c,d in TOOLS],"max_file_size_mb":MAX//1024//1024}
 
-@app.get("/", response_class=HTMLResponse)
-def home():
-    return (BASE_DIR/"frontend"/"index.html").read_text(encoding="utf-8")
+def safe_name(name): return re.sub(r"[^A-Za-z0-9._-]+","-",Path(name).stem).strip(".-")[:70] or "document"
+
+@app.get("/",response_class=HTMLResponse)
+def home(): return (BASE_DIR/"frontend"/"index.html").read_text(encoding="utf-8")
