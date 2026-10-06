@@ -1,22 +1,18 @@
 services:
   - type: web
-    name: pdfpro-api
-    env: node
+    name: usetoolbench
+    runtime: python
     plan: free
-    region: oregon
-    buildCommand: npm install
-    startCommand: node server.js
+    region: singapore
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 10000
-      - key: CORS_ORIGIN
-        value: https://usetoolbench.in
-      - key: APP_URL
-        value: https://api.usetoolbench.in
-      - key: API_URL
-        value: https://api.usetoolbench.in/api/v1
+      - key: PYTHON_VERSION
+        value: 3.13.5
       - key: STORAGE_ROOT
-        value: /tmp/pdfpro-storage
+        value: ./storage
+      - key: MAX_FILE_SIZE_MB
+        value: 25
+      - key: FILE_RETENTION_MINUTES
+        value: 60
