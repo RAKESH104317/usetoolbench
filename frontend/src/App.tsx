@@ -18,7 +18,8 @@ const FALLBACK_DEALS:Deal[]=[
 ];
 const money=(n:number)=>`₹${Math.round(Number(n)).toLocaleString("en-IN")}`;
 const pct=(d:Deal)=>Math.round(Number(d.discount_percent)||((1-d.current_price/d.original_price)*100));
-const API_BASE=(import.meta.env.VITE_API_BASE_URL||"").replace(/\/$/,"");\nconst img=(d:Deal)=>d.image_url||"";
+const API_BASE=(import.meta.env.VITE_API_BASE_URL||"").replace(/\/$/,"");
+const img=(d:Deal)=>d.image_url||"";
 function App(){
  const [deals,setDeals]=useState<Deal[]>(FALLBACK_DEALS),[q,setQ]=useState(""),[store,setStore]=useState("All"),[cat,setCat]=useState(""),[min,setMin]=useState(0),[sort,setSort]=useState("discount"),[loading,setLoading]=useState(false),[error,setError]=useState(""),[pCoupon,setPCoupon]=useState(false);
  const load=async()=>{setLoading(true);setError("");try{const p=new URLSearchParams();if(q)p.set("q",q);if(store!=="All")p.set("store",store);if(cat)p.set("category",cat);if(min)p.set("minDiscount",String(min));if(pCoupon)p.set("coupon","true");p.set("sort",sort);const r=await fetch(`${API_BASE}/api/deals?${p}`);if(!r.ok)throw Error("API unavailable");setDeals(await r.json())}catch(e){setDeals(FALLBACK_DEALS);setError("Live feed unavailable; showing the verified starter deals.")}finally{setLoading(false)}};
