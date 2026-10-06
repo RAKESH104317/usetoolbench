@@ -8,7 +8,6 @@ const money=(n:number)=>`₹${Math.round(Number(n)).toLocaleString("en-IN")}`;
 const pct=(d:Deal)=>Math.round(Number(d.discount_percent)||((1-d.current_price/d.original_price)*100));
 const API_BASE=(import.meta.env.VITE_API_BASE_URL||"").replace(/\/$/,"");
 function App(){
- const (import.meta.env.VITE_API_BASE_URL||"").replace(/\/$/,"");
  const [deals,setDeals]=useState<Deal[]>([]),[q,setQ]=useState(""),[store,setStore]=useState("All"),[cat,setCat]=useState(""),[min,setMin]=useState(0),[sort,setSort]=useState("discount"),[loading,setLoading]=useState(false),[error,setError]=useState("");
  const load=async()=>{setLoading(true);setError("");try{const p=new URLSearchParams();if(q)p.set("q",q);if(store!=="All")p.set("store",store);if(cat)p.set("category",cat);if(min)p.set("minDiscount",String(min));p.set("sort",sort);const r=await fetch(`${API_BASE}/api/deals?${p}`);if(!r.ok)throw Error("API unavailable");setDeals(await r.json())}catch(e){setDeals([]);setError("Live deal feed is not connected yet. No unverified products are shown.")}finally{setLoading(false)}};
  useEffect(()=>{load()},[store,cat,min,sort]);
