@@ -7,3 +7,7 @@ INSERT INTO deals(name,brand,store,category,product_url,original_price,current_p
 SELECT 'RARE RABBIT Men Solid Casual Green Shirt','RARE RABBIT','Flipkart','Clothing','https://www.flipkart.com/mens-casual-shirts/pr?sid=mmk%2Ckp7',2799,1103,true,true WHERE NOT EXISTS (SELECT 1 FROM deals WHERE name='RARE RABBIT Men Solid Casual Green Shirt');
 
 INSERT INTO deals(name,brand,store,category,product_url,original_price,current_price,verified,enabled) SELECT 'Gym Hound Men Graphic Print Round Neck Polyester Black T-Shirt','Gym Hound','Flipkart','Clothing','https://www.flipkart.com/gym-hound-graphic-print-men-round-neck-black-t-shirt/p/itm495fac5aacb2a',999,281,true,true WHERE NOT EXISTS (SELECT 1 FROM deals WHERE product_url='https://www.flipkart.com/gym-hound-graphic-print-men-round-neck-black-t-shirt/p/itm495fac5aacb2a');
+
+INSERT INTO deals(name,brand,store,category,product_url,original_price,current_price,verified,enabled,last_checked_at)
+SELECT 'EYEBOGLER Men Colour-Block Regular Fit T-Shirt','EYEBOGLER','AJIO','Clothing','https://www.ajio.com/men-tshirts/c/830216014',2499,250,true,true,NOW()
+WHERE NOT EXISTS (SELECT 1 FROM deals WHERE name='EYEBOGLER Men Colour-Block Regular Fit T-Shirt' AND store='AJIO');
