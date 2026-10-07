@@ -4,6 +4,7 @@ services:
     runtime: node
     plan: free
     region: singapore
+    branch: fresh-rebuild
     buildCommand: npm install && npm run build
     startCommand: npm start
     healthCheckPath: /health
