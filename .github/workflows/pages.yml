@@ -2,7 +2,7 @@ name: Deploy website to GitHub Pages
 
 on:
   push:
-    branches: [fresh-rebuild]
+    branches: [main, fresh-rebuild, 'fix/**']
   workflow_dispatch:
 
 permissions:
