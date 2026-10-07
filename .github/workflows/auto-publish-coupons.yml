@@ -1,0 +1,22 @@
+name: Auto-publish men's coupon deals
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - name: Publish qualifying coupon deals
+        run: node scripts/auto-publish-coupons.js
+        env:
+          SITE_API_URL: ${{ secrets.SITE_API_URL }}
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          DEAL_FEED_URL: ${{ secrets.DEAL_FEED_URL }}
+          DEAL_FEEDS_JSON: ${{ secrets.DEAL_FEEDS_JSON }}
