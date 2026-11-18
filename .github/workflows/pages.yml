@@ -4,7 +4,8 @@ on:
   push:
     branches: [main, fresh-rebuild, 'fix/**']
   schedule:
-    - cron: '29 18 * * *'
+    - cron: '30 18 * * *'
+    - cron: '30 6 * * *'
   workflow_dispatch:
 
 permissions:
