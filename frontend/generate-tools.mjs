@@ -39,6 +39,10 @@ fs.writeFileSync(path.join(root,'robots.txt'),'User-agent: *\nAllow: /\nDisallow
 fs.writeFileSync(path.join(root,'sitemap.xml'),'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+['','tools','privacy','about','terms','deals','pdf-tools','learn','learn/sap-s4hana',...sapModules.map(t=>'learn/sap-s4hana/'+t[0].toLowerCase()),...lessons.map(t=>'learn/'+t[0]),'learn/sap-b1/sql-practice',...b1Topics.map(t=>'learn/sap-b1/'+t[0]),...[...data,...pdfTools].map(t=>t[0])].map(s=>'<url><loc>'+base+'/'+(s?s+'/':'')+'</loc></url>').join('')+'</urlset>');
 
 
+fs.mkdirSync(path.join(root,'ai'),{recursive:true});
+let aiHtml=fs.readFileSync(path.join(root,'index.html'),'utf8').replace(/<title>.*?<\/title>/s,'<title>AI Studio | USETOOLBENCH</title>').replace(/<meta name="description"[^>]*>/,'<meta name="description" content="AI assistants for SAP Business One, SQL, Excel, writing and summaries. Service availability depends on configuration.">').replace(/<main>[\s\S]*?<\/main>/,'<main><h1>AI Studio</h1><p>AI assistants for SAP, SQL, Excel, writing and summaries. AI service requires activation.</p><a href="/">All tools</a></main>');
+fs.writeFileSync(path.join(root,'ai','index.html'),aiHtml);
+const aiMap=path.join(root,'sitemap.xml');fs.writeFileSync(aiMap,fs.readFileSync(aiMap,'utf8').replace('</urlset>','<url><loc>'+base+'/ai/</loc></url></urlset>'));
 /* SEO post-build: canonical sitemap inventory, crawlable homepage and page metadata. */
 const seoUrls=[...fs.readFileSync(path.join(root,'sitemap.xml'),'utf8').matchAll(/<loc>([^<]+)<\/loc>/g)].map(m=>m[1]);
 const seoUnique=[...new Set(seoUrls)];
