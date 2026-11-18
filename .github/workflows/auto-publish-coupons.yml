@@ -4,7 +4,7 @@ on:
     branches: [fresh-rebuild]
     paths: [".github/workflows/auto-publish-coupons.yml"]
   schedule:
-    - cron: "17 */3 * * *"
+    - cron: "*/10 * * * *"
   workflow_dispatch:
 concurrency:
   group: deal-feed-refresh
