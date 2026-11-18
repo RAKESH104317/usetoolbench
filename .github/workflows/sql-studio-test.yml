@@ -12,12 +12,13 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Start isolated SQL Server Developer
+      - name: Download and start isolated SQL Server Express
         working-directory: sql-studio
         run: |
           password="Aa1!$(openssl rand -hex 20)"
           echo "::add-mask::$password"
           echo "MSSQL_SA_PASSWORD=$password" >> "$GITHUB_ENV"
+          MSSQL_SA_PASSWORD="$password" docker compose pull
           MSSQL_SA_PASSWORD="$password" docker compose up -d
       - name: Run actual T-SQL tests
         working-directory: sql-studio
