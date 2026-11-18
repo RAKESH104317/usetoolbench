@@ -111,3 +111,5 @@ directoryHtml=directoryHtml.replace(/<main\b[^>]*>[\s\S]*?<\/main>/i,'<main><h1>
 directoryHtml=directoryHtml.replace('</head>','<style>.all-tool-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}.all-tool-card{display:block;padding:18px;border:1px solid #dce5f2;border-radius:10px;background:#fff;color:#163b80;font-weight:650;text-decoration:none}.all-tool-card[hidden]{display:none!important}.all-tool-card:hover{background:#e8efff}</style></head>');
 fs.writeFileSync(directoryFile,directoryHtml);
 console.log('Complete tools directory: '+directoryItems.length+' public destinations.');
+
+fs.writeFileSync(path.join(root,'public-directory.json'),JSON.stringify(directoryItems.map(p=>({title:p.title.replace(/ \| USETOOLBENCH$/,''),route:p.route}))));
