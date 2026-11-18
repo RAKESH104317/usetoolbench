@@ -1,8 +1,14 @@
-name: Auto-publish men's coupon deals
+name: Refresh product discounts
 on:
+  push:
+    branches: [fresh-rebuild]
+    paths: [".github/workflows/auto-publish-coupons.yml"]
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "17 */3 * * *"
   workflow_dispatch:
+concurrency:
+  group: deal-feed-refresh
+  cancel-in-progress: false
 permissions:
   contents: read
 jobs:
@@ -13,7 +19,7 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 24
-      - name: Publish qualifying coupon deals
+      - name: Refresh qualifying product offers
         run: node scripts/auto-publish-coupons.js
         env:
           SITE_API_URL: ${{ secrets.SITE_API_URL }}
