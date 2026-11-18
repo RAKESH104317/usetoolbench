@@ -32,13 +32,12 @@ jobs:
         run: |
           node --input-type=module <<'JS'
           import fs from 'node:fs';
-          const codes=['USD','EUR','GBP','CAD','AUD','AED','SGD','JPY'];
           try {
-            const response=await fetch('https://api.frankfurter.dev/v2/rates?base=INR&quotes='+codes.join(','),{signal:AbortSignal.timeout(25000)});
+            const response=await fetch('https://api.frankfurter.dev/v2/rates?base=INR',{signal:AbortSignal.timeout(25000)});
             if(!response.ok)throw Error('Rate source HTTP '+response.status);
             const rows=await response.json();
             const rates={},dates={};
-            for(const code of codes){const row=rows.find(x=>x.quote===code&&x.rate>0&&x.date);if(!row)throw Error('Missing '+code);rates[code]=1/row.rate;dates[code]=row.date;}
+            for(const row of rows){if(/^[A-Z]{3}$/.test(row.quote)&&Number.isFinite(row.rate)&&row.rate>0&&row.date){rates[row.quote]=1/row.rate;dates[row.quote]=row.date;}} if(Object.keys(rates).length<30)throw Error('Incomplete currency feed');rates.INR=1;
             fs.writeFileSync('frontend/public/exchange-rates.json',JSON.stringify({date:[...new Set(Object.values(dates))].sort().join(' / '),dates,updatedAt:new Date().toISOString(),rates,source:'Frankfurter reference rates'}));
           } catch(e) {
             console.warn(e.message);
