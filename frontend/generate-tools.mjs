@@ -54,6 +54,7 @@ for(const [slug,title,desc] of utilitySpecs){const actions=slug==='case-converte
 const utilityLinks=utilitySpecs.map(g=>'<li><a href="/'+g[0]+'/">'+g[1]+'</a></li>').join('');
 const utilityIndex=path.join(root,'tools','index.html');fs.writeFileSync(utilityIndex,fs.readFileSync(utilityIndex,'utf8').replace('</main>','<section><h2>Text and developer utilities</h2><ul>'+utilityLinks+'</ul></section></main>'));
 const utilityMap=path.join(root,'sitemap.xml');fs.writeFileSync(utilityMap,fs.readFileSync(utilityMap,'utf8').replace('</urlset>',utilitySpecs.map(g=>'<url><loc>'+base+'/'+g[0]+'/</loc></url>').join('')+'</urlset>'));
+const exchangeDir=path.join(root,'exchange-rates');fs.mkdirSync(exchangeDir,{recursive:true});fs.writeFileSync(path.join(exchangeDir,'index.html'),fs.readFileSync(path.join(root,'index.html'),'utf8').replace(/<title>.*?<\/title>/s,'<title>Worldwide Exchange Rates in INR | USETOOLBENCH</title>').replace(/<main\b[^>]*>[\s\S]*?<\/main>/i,'<main><h1>Worldwide Exchange Rates in INR</h1><p>Explore daily reference exchange rates by country and currency.</p><a href="/">Home</a></main>'));const exchangeMap=path.join(root,'sitemap.xml');fs.writeFileSync(exchangeMap,fs.readFileSync(exchangeMap,'utf8').replace('</urlset>','<url><loc>'+base+'/exchange-rates/</loc></url></urlset>'));
 /* SEO post-build: canonical sitemap inventory, crawlable homepage and page metadata. */
 const seoUrls=[...fs.readFileSync(path.join(root,'sitemap.xml'),'utf8').matchAll(/<loc>([^<]+)<\/loc>/g)].map(m=>m[1]);
 const seoUnique=[...new Set(seoUrls)];
