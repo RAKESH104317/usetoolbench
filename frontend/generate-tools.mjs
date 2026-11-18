@@ -113,3 +113,6 @@ fs.writeFileSync(directoryFile,directoryHtml);
 console.log('Complete tools directory: '+directoryItems.length+' public destinations.');
 
 fs.writeFileSync(path.join(root,'public-directory.json'),JSON.stringify(directoryItems.map(p=>({title:p.title.replace(/ \| USETOOLBENCH$/,''),route:p.route}))));
+
+/* Normalize public footers and remove obsolete duplicate utility blocks. */
+for(const p of seoPages){let html=fs.readFileSync(p.file,'utf8');html=html.replace(/<footer>USETOOLBENCH · Estimates are informational, not financial advice\.<\/footer>/g,'<footer><strong>USETOOLBENCH</strong> · Free online tools and learning resources. <a href="/about/">About</a> · <a href="/privacy/">Privacy</a> · <a href="/terms/">Terms</a></footer>');if(p.route==='/tools/')html=html.replace(/<section><h2>Text and developer utilities<\/h2><ul>[\s\S]*?<\/ul><\/section>/g,'');fs.writeFileSync(p.file,html);}
