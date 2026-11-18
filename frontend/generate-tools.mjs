@@ -83,3 +83,15 @@ for(const p of seoPages){
 }
 fs.writeFileSync(path.join(root,'sitemap.xml'),'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+seoUnique.map(url=>'<url><loc>'+url+'</loc></url>').join('')+'</urlset>');
 console.log('SEO validated '+seoUnique.length+' sitemap targets.');
+
+/* Global language navigation: translation is requested only after visitor selection. */
+const languageWidget = function(){
+ const codes="af sq am ar hy as ay az bm eu be bn bho bs bg ca ceb zh-CN zh-TW co hr cs da dv doi nl en eo et ee fi fr fy gl ka de el gn gu ht ha haw he hi hmn hu is ig ilo id ga it ja jv kn kk km rw gom ko kri ku ckb ky lo la lv ln lt lg lb mk mai mg ms ml mt mi mr mni-Mtei lus mn my ne no ny or om ps fa pl pt pa qu ro ru sm sa gd nso sr st sn sd si sk sl so es su sw sv tl tg ta tt te th ti ts tr tk ak uk ur ug uz vi cy xh yi yo zu".split(" ");
+ const host=document.getElementById("global-language-picker");if(!host)return;
+ const select=host.querySelector("select"),names=new Intl.DisplayNames(["en"],{type:"language"});
+ for(const code of codes.sort((a,b)=>(names.of(a)||a).localeCompare(names.of(b)||b))){const option=document.createElement("option");option.value=code;option.textContent=(names.of(code)||code)+" ("+code+")";select.append(option);}
+ select.value="en";
+ host.querySelector("button").addEventListener("click",()=>{if(select.value==="en")return;const url=new URL("https://translate.google.com/translate");url.searchParams.set("sl","en");url.searchParams.set("tl",select.value);url.searchParams.set("u","https://usetoolbench.in"+location.pathname);window.open(url.href,"_blank","noopener,noreferrer");});
+};
+const languageMarkup='<aside id="global-language-picker" style="background:#12284c;color:white;padding:9px 16px;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;font:14px system-ui"><label for="global-language">🌐 Website language</label><select id="global-language" style="max-width:220px;padding:6px;color:#12284c;background:white"></select><button type="button" style="padding:6px 12px;background:white;color:#12284c;border:0;border-radius:4px;cursor:pointer">Translate page</button><small>External machine translation · English original</small></aside><script>('+languageWidget.toString()+')()</script>';
+for(const p of seoPages){const html=fs.readFileSync(p.file,'utf8');fs.writeFileSync(p.file,html.replace(/<body\b[^>]*>/i,m=>m+languageMarkup));}
