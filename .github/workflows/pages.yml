@@ -3,6 +3,8 @@ name: Deploy website to GitHub Pages
 on:
   push:
     branches: [main, fresh-rebuild, 'fix/**']
+  schedule:
+    - cron: '29 18 * * *'
   workflow_dispatch:
 
 permissions:
@@ -26,6 +28,25 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci --prefix frontend
       - run: npm test
+      - name: Fetch daily INR reference rates
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const codes=['USD','EUR','GBP','CAD','AUD','AED','SGD','JPY'];
+          try {
+            const response=await fetch('https://api.frankfurter.dev/v2/rates?base=INR&quotes='+codes.join(','),{signal:AbortSignal.timeout(25000)});
+            if(!response.ok)throw Error('Rate source HTTP '+response.status);
+            const rows=await response.json();
+            const rates={},dates={};
+            for(const code of codes){const row=rows.find(x=>x.quote===code&&x.rate>0&&x.date);if(!row)throw Error('Missing '+code);rates[code]=1/row.rate;dates[code]=row.date;}
+            fs.writeFileSync('frontend/public/exchange-rates.json',JSON.stringify({date:[...new Set(Object.values(dates))].sort().join(' / '),dates,updatedAt:new Date().toISOString(),rates,source:'Frankfurter reference rates'}));
+          } catch(e) {
+            console.warn(e.message);
+            const old=await fetch('https://usetoolbench.in/exchange-rates.json',{signal:AbortSignal.timeout(15000)}).then(r=>r.ok?r.json():null).catch(()=>null);
+            if(old?.rates&&old?.date)fs.writeFileSync('frontend/public/exchange-rates.json',JSON.stringify(old));
+            else console.warn('No prior rates available; header will show unavailable.');
+          }
+          JS
       - run: npm run build --prefix frontend
         env:
           VITE_BASE_PATH: /
