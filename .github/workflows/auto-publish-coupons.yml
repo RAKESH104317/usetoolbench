@@ -20,7 +20,13 @@ jobs:
         with:
           node-version: 24
       - name: Refresh qualifying product offers
-        run: node scripts/auto-publish-coupons.js
+        run: |
+          if [[ -z "$SITE_API_URL" || -z "$ADMIN_TOKEN" || ( -z "$DEAL_FEED_URL" && -z "$DEAL_FEEDS_JSON" ) ]]; then
+            echo "::warning::Discount refresh skipped: configure SITE_API_URL, ADMIN_TOKEN and an approved deal feed."
+            echo "Discount refresh NOT RUN: required configuration missing." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          node scripts/auto-publish-coupons.js
         env:
           SITE_API_URL: ${{ secrets.SITE_API_URL }}
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
