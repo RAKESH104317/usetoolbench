@@ -132,3 +132,26 @@ const trafficApi=String(process.env.VITE_API_BASE_URL||'').replace(/\/$/,'');
 const trafficMarkup='<div id="landing-traffic" aria-label="Total homepage visits" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;color:#64748b;font:14px system-ui">Count: <strong id="traffic-total" style="display:inline-block;background:#14243b;color:#fff;border-radius:5px;padding:5px 10px;font:700 18px/1.2 ui-monospace,Consolas,monospace;letter-spacing:3px;font-variant-numeric:tabular-nums">—</strong><span id="traffic-status" hidden></span></div>';
 landingHtml=landingHtml.replace('<footer class="lp-footer">',trafficMarkup+'<footer class="lp-footer">');
 fs.writeFileSync(landingFile,landingHtml);
+
+/* Search presentation and contextual discovery. */
+const seoDescriptions={
+ '/':'Free online PDF tools, GST, EMI and SIP calculators, image utilities, SQL practice and SAP Business One tutorials. Explore USETOOLBENCH.',
+ '/edit-pdf/':'Edit supported PDF text online, add annotations and download your PDF. Browser-based PDF editor with a daily page allowance.',
+ '/ai/':'Explore AI assistants for SAP Business One, SQL, Excel and writing. AI generation depends on service availability.',
+ '/exchange-rates/':'Explore indicative international currency exchange rates in Indian rupees and daily reference rates.',
+ '/tools/':'Browse and search free online calculators, PDF utilities, developer tools and practical learning resources.'
+};
+for(const p of seoPages){
+ let html=fs.readFileSync(p.file,'utf8');
+ const title=p.route==='/'?'Free Online Tools, PDF Editor & Calculators | USETOOLBENCH':p.title.replace(/&amp;/g,'&');
+ const description=seoDescriptions[p.route]||((html.match(/<meta name="description" content="([^"]*)"/i)||[])[1]||'Explore '+title+' on USETOOLBENCH.');
+ const meta='<meta name="description" content="'+escSEO(description.replace(/&amp;/g,'&'))+'"><meta property="og:title" content="'+escSEO(title)+'"><meta property="og:description" content="'+escSEO(description.replace(/&amp;/g,'&'))+'"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="'+escSEO(title)+'"><meta name="twitter:description" content="'+escSEO(description.replace(/&amp;/g,'&'))+'">';
+ html=html.replace(/<meta\s+(?:name="(?:description|twitter:card|twitter:title|twitter:description)"|property="(?:og:title|og:description)")[^>]*>/gi,'').replace('</head>',meta+'</head>');
+ if(p.route==='/')html=html.replace(/<title>[^<]*<\/title>/,'<title>'+escSEO(title)+'</title>').replace('Work smarter. Everything you need, in one place.','Free online tools for work and everyday life.');
+ if(p.route!=='/'&&p.route!=='/ai/'&&p.route!=='/exchange-rates/'&&p.route!=='/deals/'&&p.route!=='/tools/'&&!['/about/','/privacy/','/terms/'].includes(p.route)){
+ const group=p.route.startsWith('/learn/')?seoPages.filter(q=>q.route.startsWith('/learn/sap-b1/sql-')):pdfTools.some(t=>'/'+t[0]+'/'===p.route)?seoPages.filter(q=>pdfTools.some(t=>'/'+t[0]+'/'===q.route)):seoPages.filter(q=>data.some(t=>'/'+t[0]+'/'===q.route));
+ const related=group.filter(q=>q.route!==p.route).slice(0,5);
+ if(related.length)html=html.replace('</main>','<section aria-label="Related resources"><h2>Related tools and resources</h2><ul>'+related.map(q=>'<li><a href="'+q.route+'">'+escSEO(q.title.replace(/ \\| USETOOLBENCH$/,''))+'</a></li>').join('')+'</ul><p><a href="/tools/">Browse all tools</a></p></section></main>');
+ }
+ fs.writeFileSync(p.file,html);
+}
