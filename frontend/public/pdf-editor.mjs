@@ -32,10 +32,10 @@ function removeNativeText(doc,p,original){
   }
   if(matches.length!==1)throw Error('Native editing unavailable for this text run (unsupported encoding or repeated text). No PDF was exported.');
   const m=matches[0];
-  // Keep the text advance by replacing the show operand with invisible positioning
-  // only for isolated text objects; other layouts are rejected.
+  // Allow the trailing next-line operator emitted by pdf-lib before ET.
+  // Only isolated text objects are supported; other layouts are rejected.
   const before=m.source.slice(0,m.pos), after=m.source.slice(m.pos+m.token.length);
-  if(!/\bBT\b(?:(?!\bET\b)[\s\S])*$/.test(before)||!/^\s*(?:Tj|\]\s*TJ)\s*ET\b/.test(after))throw Error('Native editing unavailable for a shared text object.');
+  if(!/\bBT\b(?:(?!\bET\b)[\s\S])*$/.test(before)||!/^\s*(?:Tj|\]\s*TJ)\s*(?:T\*\s*)?ET\b/.test(after))throw Error('Native editing unavailable for a shared text object.');
   const updated=before+(m.token.startsWith('<')?'<>':'()')+after;
   if(!(m.ref instanceof PDFRef))throw Error('Unsupported direct content stream.');
   doc.context.assign(m.ref,doc.context.flateStream(updated));
