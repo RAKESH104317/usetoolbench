@@ -51,6 +51,16 @@ jobs:
         env:
           VITE_BASE_PATH: /
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+      - name: Package PDF editor libraries locally
+        run: |
+          npm install --prefix frontend --no-save --package-lock=false pdf-lib@1.17.1 pdfjs-dist@4.10.38
+          mkdir -p frontend/dist/pdf-vendor
+          cp frontend/node_modules/pdfjs-dist/legacy/build/pdf.mjs frontend/dist/pdf-vendor/
+          cp frontend/node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs frontend/dist/pdf-vendor/
+          cp frontend/node_modules/pdf-lib/dist/pdf-lib.esm.min.js frontend/dist/pdf-vendor/pdf-lib.mjs
+          sed -i 's|https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm|/pdf-vendor/pdf-lib.mjs|g; s|https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/legacy/build/|/pdf-vendor/|g' frontend/dist/pdf-editor.mjs
+          node --check frontend/dist/pdf-editor.mjs
+          test -s frontend/dist/pdf-vendor/pdf.worker.mjs
       - uses: actions/upload-pages-artifact@v4
         with:
           path: frontend/dist
