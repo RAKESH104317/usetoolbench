@@ -155,3 +155,27 @@ for(const p of seoPages){
  }
  fs.writeFileSync(p.file,html);
 }
+
+/* Useful search landing content: worked examples, limitations and breadcrumbs. */
+const practicalSEO={
+ '/gst-calculator/':['How to calculate GST in India','For a taxable value of ₹1,000 at 18%, GST is ₹180 and the invoice total is ₹1,180. For an inclusive price of ₹1,180, divide by 1.18 to obtain the taxable value of ₹1,000.','The applicable rate depends on the goods or services and current tax rules.'],
+ '/emi-calculator/':['How monthly loan EMI works','For a ₹5,00,000 loan at 9% annual interest over 60 months, the estimated monthly payment is about ₹10,379. The calculator uses the reducing-balance formula.','Actual lender fees, rounding and floating-rate changes may affect repayment.'],
+ '/sip-calculator/':['How to estimate SIP investment growth','Enter a monthly contribution, assumed annual return and investment period. For ₹5,000 per month over 10 years, your total contribution is ₹6,00,000 before investment gains.','Market returns fluctuate and the projected amount is not guaranteed.'],
+ '/edit-pdf/':['How to edit text in a PDF online','Open a PDF, select a supported text run, type the replacement and download the edited document. Check the downloaded file before sharing it.','Scanned documents, embedded fonts and complex text layouts may not support native text replacement. The daily page allowance applies.'],
+ '/merge-pdf/':['How to combine PDF documents','Select the PDF files in the order you want them to appear, merge them and download the combined file. Review the resulting page order.','Password-protected or damaged documents may require separate handling.'],
+ '/json-formatter/':['How to format JSON','Paste a JSON object such as {"name":"Example","active":true} and format it to display readable indentation.','JSON requires double-quoted property names and does not allow trailing commas.'],
+ '/image-resizer/':['How to resize an image','Choose an image and enter the desired width and height in pixels. For example, resize a 1200 × 800 image to 600 × 400 to preserve its aspect ratio.','Changing the aspect ratio may distort the image.']
+};
+for(const p of seoPages){
+ if(p.route==='/')continue;
+ let html=fs.readFileSync(p.file,'utf8');
+ const title=p.title.replace(/ &amp; /g,' & ').replace(/ \| USETOOLBENCH$/,'');
+ const crumb={'@context':'https://schema.org','@type':'BreadcrumbList',itemListElement:[{'@type':'ListItem',position:1,name:'Home',item:base+'/'},{'@type':'ListItem',position:2,name:title,item:p.url}]};
+ if(!['/ai/','/exchange-rates/','/deals/'].includes(p.route)){
+ html=html.replace(/<main\b[^>]*>/i,m=>m+'<nav aria-label="Breadcrumb" style="font-size:13px;margin:0 0 18px"><a href="/">Home</a> / <span aria-current="page">'+escSEO(title)+'</span></nav>');
+ html=html.replace('</head>','<script type="application/ld+json">'+JSON.stringify(crumb).replace(/</g,'\\u003c')+'</script></head>');
+ }
+ const guide=practicalSEO[p.route];
+ if(guide)html=html.replace('</main>','<section class="search-guide" style="margin:24px 0;padding:20px;border:1px solid #dce4ef;border-radius:12px"><h2>'+escSEO(guide[0])+'</h2><p>'+escSEO(guide[1])+'</p><p><strong>Important:</strong> '+escSEO(guide[2])+'</p></section></main>');
+ fs.writeFileSync(p.file,html);
+}
