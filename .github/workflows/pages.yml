@@ -82,10 +82,9 @@ jobs:
             await page.waitForFunction(()=>typeof document.querySelector('#upload')?.onchange==='function');
             await page.locator('#upload').setInputFiles({name:'sample.pdf',mimeType:'application/pdf',buffer:Buffer.from(await doc.save())});
             await page.waitForFunction(()=>!document.querySelector('#workspace').hidden && document.querySelector('#counter').textContent.trim()==='1 / 1' && document.querySelector('#preview').width>300,{},{timeout:30000}).catch(async e=>{console.log('EDITOR STATUS',await page.locator('#quota').textContent(),await page.locator('#status').textContent());throw e});
-            await page.locator('[data-pdf-mode="select"]').click();
-            const overlay=page.locator('#overlay');
-            const position=await overlay.evaluate(el=>({x:70*el.clientWidth/595,y:85*el.clientHeight/842}));
-            await overlay.click({position});
+            assert.equal(await page.locator('#mode').inputValue(),'select');
+            assert.equal(await page.locator('#drop').isHidden(),true);
+            await page.getByRole('button',{name:'Edit Original sample',exact:true}).tap();
             const inline=page.getByRole('textbox',{name:'Edit PDF text',exact:true});
             await inline.fill('Edited sample');
             await inline.press('Enter');
