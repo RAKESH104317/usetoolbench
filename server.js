@@ -16,6 +16,13 @@ app.post('/api/pdf/allowance',async(req,res)=>{
  res.json({remaining:5-result.rows[0].pages});
  }catch(e){res.status(503).json({error:'PDF allowance service unavailable.'})}
 });
+app.post('/api/traffic/landing',rateLimit({windowMs:60000,max:20}),async(req,res)=>{
+ res.set('Cache-Control','no-store');
+ if(!process.env.DATABASE_URL)return res.status(503).json({error:'Traffic counter unavailable'});
+ try{await pool.query('CREATE TABLE IF NOT EXISTS landing_page_views (day date PRIMARY KEY, views bigint NOT NULL DEFAULT 0)');
+ const result=await pool.query("WITH counted AS (INSERT INTO landing_page_views(day,views) VALUES((now() AT TIME ZONE 'UTC')::date,1) ON CONFLICT(day) DO UPDATE SET views=landing_page_views.views+1 RETURNING day,views) SELECT counted.views AS today, counted.views+COALESCE((SELECT SUM(v.views) FROM landing_page_views v WHERE v.day<>counted.day),0) AS total FROM counted");
+ res.json(result.rows[0]);}catch(e){res.status(503).json({error:'Traffic counter unavailable'})}
+});
 app.get('/health',async(req,res)=>{try{await pool.query('select 1');res.json({ok:true,database:true})}catch(e){res.json({ok:true,database:false,mode:'static-fallback'})}});
 app.get('/api/stores',(req,res)=>res.json(['Amazon India','Flipkart','Myntra','AJIO','Zepto','Flipkart Minutes','Instamart','Blinkit']));
 app.get('/api/deals',async(req,res)=>{try{const q=String(req.query.q||''),store=String(req.query.store||''),category=String(req.query.category||''),min=Number(req.query.minDiscount||0),coupon=req.query.coupon==='true',sort=String(req.query.sort||'discount');const a=[],w=['enabled=true','verified=true','current_price <= original_price * 0.60','(expiry_at IS NULL OR expiry_at > NOW())','last_checked_at > NOW() - INTERVAL \'48 hours\''];if(q){a.push('%'+q+'%');w.push(`(name ILIKE $${a.length} OR brand ILIKE $${a.length} OR category ILIKE $${a.length})`)}if(store){a.push(store);w.push(`store=$${a.length}`)}if(category){a.push(category);w.push(`category=$${a.length}`)}if(min){a.push(min);w.push(`(100-current_price*100/NULLIF(original_price,0)) >= $${a.length}`)}if(coupon)w.push('coupon_code IS NOT NULL');const order={discount:'(current_price/original_price) ASC',price:'current_price ASC',savings:'(original_price-current_price) DESC',newest:'created_at DESC',ending:'expiry_at ASC NULLS LAST'}[sort]||'(current_price/original_price) ASC';const r=await pool.query(`SELECT * FROM deals WHERE ${w.join(' AND ')} ORDER BY ${order} LIMIT 100`,a);res.json(r.rows.map(map))}catch(e){res.status(503).json({error:'Database unavailable',code:'DATABASE_UNAVAILABLE'})}});
