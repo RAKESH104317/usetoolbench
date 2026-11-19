@@ -18,9 +18,11 @@ app.post('/api/pdf/allowance',async(req,res)=>{
 });
 app.post('/api/traffic/landing',rateLimit({windowMs:60000,max:20}),async(req,res)=>{
  res.set('Cache-Control','no-store');
- if(!process.env.DATABASE_URL)return res.status(503).json({error:'Traffic counter unavailable'});
- try{await pool.query('CREATE TABLE IF NOT EXISTS landing_page_views (day date PRIMARY KEY, views bigint NOT NULL DEFAULT 0)');
- const result=await pool.query("WITH counted AS (INSERT INTO landing_page_views(day,views) VALUES((now() AT TIME ZONE 'UTC')::date,1) ON CONFLICT(day) DO UPDATE SET views=landing_page_views.views+1 RETURNING day,views) SELECT counted.views AS today, counted.views+COALESCE((SELECT SUM(v.views) FROM landing_page_views v WHERE v.day<>counted.day),0) AS total FROM counted");
+ if(!process.env.DATABASE_URL||!process.env.ADMIN_TOKEN)return res.status(503).json({error:'Traffic counter unavailable'});
+ try{const hash=require('crypto').createHmac('sha256',process.env.ADMIN_TOKEN).update(String(req.ip)).digest('hex');
+ await pool.query('CREATE TABLE IF NOT EXISTS landing_unique_visitors (ip_hash text PRIMARY KEY, first_seen timestamptz NOT NULL DEFAULT now())');
+ await pool.query('INSERT INTO landing_unique_visitors(ip_hash) VALUES($1) ON CONFLICT DO NOTHING',[hash]);
+ const result=await pool.query('SELECT COUNT(*) AS total FROM landing_unique_visitors');
  res.json(result.rows[0]);}catch(e){res.status(503).json({error:'Traffic counter unavailable'})}
 });
 app.get('/health',async(req,res)=>{try{await pool.query('select 1');res.json({ok:true,database:true})}catch(e){res.json({ok:true,database:false,mode:'static-fallback'})}});
