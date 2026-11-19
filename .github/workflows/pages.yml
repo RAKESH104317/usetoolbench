@@ -79,9 +79,13 @@ jobs:
             await page.goto('http://localhost:8765/edit-pdf/');
             await page.locator('#upload').setInputFiles({name:'sample.pdf',mimeType:'application/pdf',buffer:Buffer.from(await doc.save())});
             await page.waitForFunction(()=>document.querySelector('#zoomvalue')?.textContent!=='100%' && document.querySelector('#preview')?.width>300,{},{timeout:30000});
-            await page.locator('[data-pdf-mode="text"]').click();
-            await page.locator('#text').fill('Edited sample');
-            await page.locator('#overlay').click({position:{x:45,y:100}});
+            await page.locator('[data-pdf-mode="select"]').click();
+            const overlay=page.locator('#overlay');
+            const position=await overlay.evaluate(el=>({x:70*el.clientWidth/595,y:85*el.clientHeight/842}));
+            await overlay.click({position});
+            const inline=page.getByRole('textbox',{name:'Edit PDF text',exact:true});
+            await inline.fill('Edited sample');
+            await inline.press('Enter');
             const download=page.waitForEvent('download');
             await page.locator('#save').click();
             const file=await download;
@@ -94,7 +98,7 @@ jobs:
             const parsed=await pdfjs.getDocument({data:new Uint8Array(await fs.readFile(path)),useSystemFonts:true}).promise;
             const text=(await (await parsed.getPage(1)).getTextContent()).items.map(i=>i.str).join(' ');
             assert.ok(text.includes('Edited sample'),text);
-            console.log('Mobile PDF upload, add text and download passed');
+            console.log('Mobile PDF upload, direct existing-text editing and download passed');
           } finally {await browser.close()}
           JS
       - uses: actions/upload-pages-artifact@v4
