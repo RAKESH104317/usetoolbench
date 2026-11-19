@@ -100,6 +100,7 @@ jobs:
             const parsed=await pdfjs.getDocument({data:new Uint8Array(await fs.readFile(path)),useSystemFonts:true}).promise;
             const text=(await (await parsed.getPage(1)).getTextContent()).items.map(i=>i.str).join(' ');
             assert.ok(text.includes('Edited sample'),text);
+            assert.ok(!text.includes('Original sample'), 'Original text must be removed: '+text);
             console.log('Mobile PDF upload, direct existing-text editing and download passed');
           } finally {await browser.close()}
           JS
