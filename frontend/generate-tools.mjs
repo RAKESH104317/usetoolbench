@@ -129,6 +129,6 @@ const landingStyle='<style>.lp{font:16px system-ui,sans-serif;color:#14243b;back
 if(!/<main\b[^>]*>[\s\S]*?<\/main>/i.test(landingHtml))throw Error('Homepage fallback main missing');
 landingHtml=landingHtml.replace(/<main\b[^>]*>[\s\S]*?<\/main>/i,()=>landingMarkup).replace('</head>',landingStyle+'</head>');
 const trafficApi=String(process.env.VITE_API_BASE_URL||'').replace(/\/$/,'');
-const trafficMarkup='<div id="landing-traffic" aria-label="Total homepage visits" style="text-align:center;padding:10px;color:#64748b;font:14px system-ui">Count: <strong id="traffic-total">—</strong><span id="traffic-status" hidden></span></div>';
+const trafficMarkup='<div id="landing-traffic" aria-label="Total homepage visits" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;color:#64748b;font:14px system-ui">Count: <strong id="traffic-total" style="display:inline-block;background:#14243b;color:#fff;border-radius:5px;padding:5px 10px;font:700 18px/1.2 ui-monospace,Consolas,monospace;letter-spacing:3px;font-variant-numeric:tabular-nums">—</strong><span id="traffic-status" hidden></span></div>';
 landingHtml=landingHtml.replace('<footer class="lp-footer">',trafficMarkup+'<footer class="lp-footer">').replace('</body>','<script type="module" src="/landing-traffic.mjs" data-api="'+escSEO(trafficApi)+'"></script></body>');
 fs.writeFileSync(landingFile,landingHtml);
