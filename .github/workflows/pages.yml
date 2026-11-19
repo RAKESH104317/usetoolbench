@@ -74,11 +74,14 @@ jobs:
           const browser=await chromium.launch({headless:true});
           try {
             const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,acceptDownloads:true});
-            await page.route('**/api/pdf/allowance',r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({remaining:4}),headers:{'access-control-allow-origin':'*'}}));
+            page.on('pageerror',e=>console.log('PAGE ERROR',e.message));
+            page.on('console',m=>console.log('BROWSER',m.text()));
+            await page.route('**/api/pdf/allowance',r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({remaining:4}),headers:{'access-control-allow-origin':'*','access-control-allow-methods':'POST, OPTIONS','access-control-allow-headers':'content-type'}}));
             const doc=await PDFDocument.create();doc.addPage([595,842]).drawText('Original sample',{x:60,y:750});
             await page.goto('http://localhost:8765/edit-pdf/');
+            await page.waitForFunction(()=>typeof document.querySelector('#upload')?.onchange==='function');
             await page.locator('#upload').setInputFiles({name:'sample.pdf',mimeType:'application/pdf',buffer:Buffer.from(await doc.save())});
-            await page.waitForFunction(()=>document.querySelector('#zoomvalue')?.textContent!=='100%' && document.querySelector('#preview')?.width>300,{},{timeout:30000});
+            await page.waitForFunction(()=>!document.querySelector('#workspace').hidden && document.querySelector('#counter').textContent.trim()==='1 / 1' && document.querySelector('#preview').width>300,{},{timeout:30000}).catch(async e=>{console.log('EDITOR STATUS',await page.locator('#quota').textContent(),await page.locator('#status').textContent());throw e});
             await page.locator('[data-pdf-mode="select"]').click();
             const overlay=page.locator('#overlay');
             const position=await overlay.evaluate(el=>({x:70*el.clientWidth/595,y:85*el.clientHeight/842}));
