@@ -179,3 +179,23 @@ for(const p of seoPages){
  if(guide)html=html.replace('</main>','<section class="search-guide" style="margin:24px 0;padding:20px;border:1px solid #dce4ef;border-radius:12px"><h2>'+escSEO(guide[0])+'</h2><p>'+escSEO(guide[1])+'</p><p><strong>Important:</strong> '+escSEO(guide[2])+'</p></section></main>');
  fs.writeFileSync(p.file,html);
 }
+
+/* Search quality: visible task-specific FAQs with matching structured data. */
+const helpfulFAQs={
+ '/gst-calculator/':[['What is the difference between inclusive and exclusive GST?','Exclusive GST is added to the taxable price. Inclusive GST is already included in the displayed price.'],['Does this tool choose the correct GST rate?','No. Confirm the applicable GST rate and treatment for your goods or services before using the result.']],
+ '/emi-calculator/':[['What affects my EMI?','Principal, annual interest rate and loan tenure determine the estimated monthly payment.'],['Are processing fees included?','No. The estimate excludes lender fees and changes to floating interest rates.']],
+ '/sip-calculator/':[['Is the SIP return guaranteed?','No. The projected return is an assumption and actual market performance can differ.'],['What is invested principal?','It is your monthly contribution multiplied by the number of months, before gains or losses.']],
+ '/edit-pdf/':[['Can I edit text in any PDF?','No. Native text replacement works only on supported text runs. Scans and complex layouts may need a different workflow.'],['Should I check the downloaded PDF?','Yes. Review the saved document for font and layout changes before sharing it.']],
+ '/merge-pdf/':[['Does the order of files matter?','Yes. Arrange the files in your desired page order before merging.'],['Can protected PDFs be merged?','Some protected or damaged files may not be processed successfully.']],
+ '/json-formatter/':[['Why is my JSON invalid?','Common errors include single quotes, trailing commas and unquoted property names.'],['Does formatting change JSON data?','Formatting changes whitespace and indentation, not the intended values.']],
+ '/image-resizer/':[['How do I avoid a stretched image?','Keep the same width-to-height ratio when choosing the new dimensions.'],['Will increasing dimensions improve image quality?','No. Upscaling cannot restore detail missing from the original image.']]
+};
+for(const p of seoPages){
+ const faq=helpfulFAQs[p.route];
+ if(!faq)continue;
+ let html=fs.readFileSync(p.file,'utf8');
+ const faqHtml='<section class="tool-faq" aria-label="Frequently asked questions" style="margin:24px 0;padding:20px;border:1px solid #dce4ef;border-radius:12px"><h2>Frequently asked questions</h2>'+faq.map(([q,a])=>'<h3>'+escSEO(q)+'</h3><p>'+escSEO(a)+'</p>').join('')+'</section>';
+ const faqSchema={'@context':'https://schema.org','@type':'FAQPage',mainEntity:faq.map(([q,a])=>({'@type':'Question',name:q,acceptedAnswer:{'@type':'Answer',text:a}}))};
+ html=html.replace('</main>',faqHtml+'</main>').replace('</head>','<script type="application/ld+json">'+JSON.stringify(faqSchema).replace(/</g,'\\u003c')+'</script></head>');
+ fs.writeFileSync(p.file,html);
+}
