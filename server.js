@@ -8,13 +8,13 @@ function admin(req,res,next){if(!process.env.ADMIN_TOKEN||req.headers.authorizat
 if(process.env.RENDER==='true')app.set('trust proxy',1);
 const pdfCrypto=require('crypto');
 app.post('/api/pdf/allowance',async(req,res)=>{
- const pages=Number(req.body.pages);if(!Number.isInteger(pages)||pages<1||pages>5)return res.status(400).json({error:'Maximum 5 PDF pages per IP per UTC day.'});
+ const pages=Number(req.body.pages);if(!Number.isInteger(pages)||pages<1||pages>20)return res.status(400).json({error:'Maximum 20 PDF pages per IP per UTC day.'});
  if(!process.env.DATABASE_URL||!process.env.ADMIN_TOKEN)return res.status(503).json({error:'PDF allowance service is not configured.'});
  const ip=pdfCrypto.createHmac('sha256',process.env.ADMIN_TOKEN).update(req.ip||req.socket.remoteAddress||'unknown').digest('hex');
  try{await pool.query('CREATE TABLE IF NOT EXISTS pdf_daily_allowance (ip_hash text NOT NULL, day date NOT NULL, pages integer NOT NULL, PRIMARY KEY(ip_hash,day))');
- const result=await pool.query("INSERT INTO pdf_daily_allowance(ip_hash,day,pages) VALUES($1,(now() AT TIME ZONE 'UTC')::date,$2) ON CONFLICT(ip_hash,day) DO UPDATE SET pages=pdf_daily_allowance.pages+EXCLUDED.pages WHERE pdf_daily_allowance.pages+EXCLUDED.pages<=5 RETURNING pages",[ip,pages]);
+ const result=await pool.query("INSERT INTO pdf_daily_allowance(ip_hash,day,pages) VALUES($1,(now() AT TIME ZONE 'UTC')::date,$2) ON CONFLICT(ip_hash,day) DO UPDATE SET pages=pdf_daily_allowance.pages+EXCLUDED.pages WHERE pdf_daily_allowance.pages+EXCLUDED.pages<=20 RETURNING pages",[ip,pages]);
  if(!result.rowCount)return res.status(429).json({error:'Daily PDF allowance exceeded. Try again after midnight UTC.'});
- res.json({remaining:5-result.rows[0].pages});
+ res.json({remaining:20-result.rows[0].pages});
  }catch(e){res.status(503).json({error:'PDF allowance service unavailable.'})}
 });
 app.post('/api/traffic/landing',rateLimit({windowMs:60000,max:20}),async(req,res)=>{
