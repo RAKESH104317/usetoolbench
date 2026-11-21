@@ -100,6 +100,20 @@ page('api-tester','API Tester – REST Client','Test HTTP APIs with methods, hea
 fs.writeFileSync(utilityMap,fs.readFileSync(utilityMap,'utf8').replace('</urlset>','<url><loc>'+base+'/api-tester/</loc></url></urlset>'));
 
 /* SEO post-build: canonical sitemap inventory, crawlable homepage and page metadata. */
+// Rebuild sitemap from pages actually emitted by the build. This avoids stale
+// URLs, missing newly added tools and accidentally publishing the admin page.
+const discoverPages=(dir,relative='')=>{
+ const pages=[];
+ for(const entry of fs.readdirSync(dir,{withFileTypes:true})){
+  if(entry.isDirectory()){
+   if(entry.name==='admin')continue;
+   pages.push(...discoverPages(path.join(dir,entry.name),relative+entry.name+'/'));
+  }else if(entry.name==='index.html')pages.push(base+'/'+relative);
+ }
+ return pages;
+};
+const discoveredUrls=[...new Set(discoverPages(root))].sort((a,b)=>a===base+'/'?-1:b===base+'/'?1:a.localeCompare(b));
+fs.writeFileSync(path.join(root,'sitemap.xml'),'<?xml version="1.0" encoding="UTF-8"?>\\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\\n'+discoveredUrls.map(u=>'  <url><loc>'+u+'</loc></url>').join('\\n')+'\\n</urlset>\\n');
 const seoUrls=[...fs.readFileSync(path.join(root,'sitemap.xml'),'utf8').matchAll(/<loc>([^<]+)<\/loc>/g)].map(m=>m[1]);
 const seoUnique=[...new Set(seoUrls)];
 const seoPages=seoUnique.map(url=>{
