@@ -46,6 +46,20 @@ app.post('/api/ai',rateLimit({windowMs:60000,max:3}),async(req,res)=>{
  try{const upstream=await fetch('https://router.huggingface.co/v1/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+process.env.HF_TOKEN,'Content-Type':'application/json'},body:JSON.stringify({model:process.env.HF_MODEL||'deepseek-ai/DeepSeek-V4.1-Flash:cheapest',messages:[{role:'system',content:aiModes[p.data.mode]+'. Do not invent facts or request secrets.'},{role:'user',content:p.data.input}],max_tokens:1500}),signal:AbortSignal.timeout(45000)});if(!upstream.ok){console.warn('Hugging Face inference status',upstream.status);return res.status(502).json({error:upstream.status===429?'AI provider rate limit reached.':upstream.status===402?'AI provider credits exhausted.':'AI provider unavailable.'});}const data=await upstream.json();const output=data.choices?.[0]?.message?.content;if(!output)return res.status(502).json({error:'No AI output returned.'});res.json({output});}catch{return res.status(502).json({error:'AI service temporarily unavailable.'});}
 });
 
+// Serve crawler discovery files explicitly; never return the SPA HTML for these paths.
+for (const [route, filename, mime] of [
+  ['/robots.txt', 'robots.txt', 'text/plain; charset=utf-8'],
+  ['/sitemap.xml', 'sitemap.xml', 'application/xml; charset=utf-8']
+]) {
+  app.get(route, (req, res) => {
+    const file = path.join(__dirname, 'frontend', 'dist', filename);
+    res.type(mime);
+    res.set('Cache-Control', 'public, max-age=300');
+    res.sendFile(file, err => {
+      if (err && !res.headersSent) res.status(err.statusCode || 500).end();
+    });
+  });
+}
 app.use(express.static(path.join(__dirname,'frontend','dist')));
 app.use((req,res)=>res.sendFile(path.join(__dirname,'frontend','dist','index.html')));
 async function init(){if(!process.env.DATABASE_URL){console.warn('DATABASE_URL not set; API will return database errors until configured.');return}const sql=fs.readFileSync(path.join(__dirname,'schema.sql'),'utf8');for(const statement of sql.split(';').map(x=>x.trim()).filter(Boolean))await pool.query(statement);}
