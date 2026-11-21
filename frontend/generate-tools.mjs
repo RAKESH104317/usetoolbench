@@ -41,6 +41,37 @@ const purchaseModuleLinks={
  'business-partners':'<h2>Business Partners — Vendor transactions</h2><p>Learn how a vendor master is used from Purchase Order through A/P Invoice and payment.</p>'
 };
 const purchaseModuleCard=slug=>purchaseModuleLinks[slug]?'<section class="panel" style="padding:18px;margin:18px 0;border:1px solid #cbd5e1;border-radius:12px">'+purchaseModuleLinks[slug]+'<p><a href="/learn/sap-b1/purchase-cycle/" style="font-weight:700">Open illustrated PR → PO → GRPO → A/P Invoice lesson</a></p></section>':'';
+
+/* Every SAP B1 module receives its own accessible visual learning walkthrough. */
+const b1VisualDetails={
+ 'query-manager':['Tools → Queries → Query Manager','Choose a query category','Write a read-only SELECT','Execute, validate and save'],
+ sales:['Sales – A/R → Sales Quotation','Create quotation for customer','Copy to Sales Order → Delivery → A/R Invoice','Receive Incoming Payment'],
+ purchase:['Purchasing – A/P → Purchase Request','Create Purchase Request and Purchase Order','Copy PO to Goods Receipt PO','Create A/P Invoice and Outgoing Payment'],
+ inventory:['Inventory → Item Master Data','Review item and warehouse','Check stock, committed and ordered','Post authorized inventory movement'],
+ finance:['Financials → Journal Entry','Select posting date and accounts','Enter balanced debit and credit','Preview and add journal entry'],
+ production:['Production → Bill of Materials','Maintain components and quantities','Create and release Production Order','Issue components and receive finished goods'],
+ 'business-partners':['Business Partners → Business Partner Master Data','Select customer or vendor type','Maintain tax, payment and address data','Save and validate master record'],
+ banking:['Banking → Incoming Payments','Select customer or vendor','Apply payment against open documents','Check reconciliation and journal entry'],
+ service:['Service → Service Call','Select customer and equipment','Record issue and assign technician','Update resolution and close'],
+ 'fixed-assets':['Financials → Fixed Assets','Create or inspect asset master','Review capitalization and depreciation','Run approved depreciation posting'],
+ crm:['Opportunities → Sales Opportunities','Choose customer and sales stage','Record expected amount and activity','Update stages and close opportunity'],
+ fms:['Tools → Queries → Query Manager','Save parameterized query','Attach query as formatted search','Test on the intended SAP form'],
+ 'transaction-notification':['SQL Server → Company Database','Review transaction notification procedure','Test validation on a test company','Verify errors and successful posting'],
+ 'crystal-reports':['SAP Business One → Report and Layout Manager','Open Crystal Reports layout','Bind parameters and test preview','Publish and assign authorized layout'],
+ 'query-library':['Tools → Queries → Query Manager','Choose a documented business question','Run read-only SQL and inspect rows','Save and share with authorized users'],
+ administration:['Administration → System Initialization','Review company configuration','Inspect users and authorizations','Test changes with approved permissions']
+};
+const b1VisualLesson=(slug,title)=>{
+ const steps=b1VisualDetails[slug]||['Open SAP Business One','Choose module','Review transaction','Validate results'];
+ const escapeSvg=s=>esc(String(s)).replace(/"/g,'&quot;');
+ const images=steps.map((step,i)=>{
+  const y=104;const safe=escapeSvg(step);
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="'+escapeSvg(title+' step '+(i+1)+': '+step)+'" viewBox="0 0 640 200" style="display:block;width:100%;height:auto;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc"><rect width="640" height="47" fill="#173967"/><text x="18" y="30" fill="white" font-size="17" font-weight="700">SAP Business One · '+escapeSvg(title)+'</text><rect x="20" y="63" width="600" height="112" rx="10" fill="#fff" stroke="#d5deeb"/><circle cx="65" cy="119" r="30" fill="#dbeafe"/><text x="65" y="127" text-anchor="middle" font-size="24" fill="#1d4ed8">'+(i+1)+'</text><text x="110" y="103" font-size="13" fill="#64748b">STEP '+(i+1)+'</text><text x="110" y="129" font-size="15" font-weight="600" fill="#152d4b">'+safe+'</text></svg>';
+  return '<section style="margin:18px 0"><h3>Step '+(i+1)+': '+esc(step)+'</h3><figure style="margin:10px 0">'+svg+'<figcaption style="font-size:12px;color:#64748b">Original learning illustration, not a screenshot from SAP software.</figcaption></figure><p>Open the relevant SAP B1 screen, review the fields and document status, and verify the result in a test company before moving to the next step.</p></section>';
+ }).join('');
+ return '<section class="panel" style="padding:18px;margin:18px 0"><h2>Visual step-by-step module guide</h2><p>Follow the illustrated workflow below. Menu availability, fields and accounting postings depend on configuration and authorizations.</p>'+images+'<h2>Practice exercise</h2><p>Reproduce these steps in an authorized SAP Business One test company. Record the document number, status, and relevant journal entry or report output. Compare with the standard SAP transaction.</p></section>';
+};
+
 for(const [slug,title,desc,query] of b1Topics){page('learn/sap-b1/'+slug,'SAP B1 '+title,desc,'<div class="lesson-layout"><aside>'+b1Nav+'</aside><article><h2>'+esc(title)+'</h2><p>'+esc(desc)+'</p>'+purchaseModuleCard(slug)+'<h2>SQL Server example</h2><pre id="sql-example">'+esc(query)+'</pre><div style="display:flex;justify-content:flex-end;margin-top:10px"><button type="button" id="copy-sql">Copy SQL query</button></div><p id="copy-status" role="status"></p><script>document.getElementById("copy-sql").onclick=async()=>{try{await navigator.clipboard.writeText(document.getElementById("sql-example").textContent);document.getElementById("copy-status").textContent="Query copied"}catch(e){document.getElementById("copy-status").textContent="Select and copy the query manually."}}</script><h2>Practice</h2><p>Run the example in the appropriate authorized SAP B1 environment. Query Manager placeholders and FMS references are SAP-specific and do not run unchanged in SSMS. Results depend on your company data and configuration.</p></article></div>');}
 
 /* End-to-end purchasing functional lesson, with practical document flow and journal entries. */
