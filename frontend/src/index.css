@@ -2,8 +2,8 @@
   font-family: Inter, system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #e2e8f0;
-  background: #0f172a;
+  color: #193553;
+  background: #eef5ff;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -16,7 +16,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: linear-gradient(135deg, #0f172a 0%, #111827 100%);
+  background: radial-gradient(circle at 12% 14%, #cbdfff, transparent 42%), radial-gradient(circle at 90% 80%, #d3f6ec, transparent 44%), #f4f8ff;
 }
 
 #root {
@@ -32,18 +32,20 @@ body {
 
 .card {
   width: min(100%, 560px);
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.95);
   border-radius: 22px;
   padding: 32px;
-  box-shadow: 0 30px 70px rgba(15, 23, 42, 0.3);
+  box-shadow: 0 24px 70px rgba(36, 71, 124, 0.16);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
 }
 
 .eyebrow {
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: #a5b4fc;
+  color: #2e66ac;
 }
 
 h1 {
@@ -72,13 +74,13 @@ h1 {
   padding: 14px 16px;
   border-radius: 12px;
   background: rgba(148, 163, 184, 0.1);
-  color: #e2e8f0;
+  color: #193553;
 }
 
 .download-link {
   display: inline-block;
   margin-top: 18px;
   text-decoration: none;
-  color: #bfdbfe;
+  color: #2456a6;
   font-weight: 600;
 }
