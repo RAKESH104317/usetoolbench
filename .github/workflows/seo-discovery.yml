@@ -18,6 +18,6 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
-      - run: npm run build
+      - run: npm --prefix frontend ci --include=dev
+      - run: npm --prefix frontend run build
       - run: node scripts/check-seo.cjs
