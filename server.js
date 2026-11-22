@@ -46,6 +46,22 @@ app.post('/api/ai',rateLimit({windowMs:60000,max:3}),async(req,res)=>{
  try{const upstream=await fetch('https://router.huggingface.co/v1/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+process.env.HF_TOKEN,'Content-Type':'application/json'},body:JSON.stringify({model:process.env.HF_MODEL||'deepseek-ai/DeepSeek-V4.1-Flash:cheapest',messages:[{role:'system',content:aiModes[p.data.mode]+'. Do not invent facts or request secrets.'},{role:'user',content:p.data.input}],max_tokens:1500}),signal:AbortSignal.timeout(45000)});if(!upstream.ok){console.warn('Hugging Face inference status',upstream.status);return res.status(502).json({error:upstream.status===429?'AI provider rate limit reached.':upstream.status===402?'AI provider credits exhausted.':'AI provider unavailable.'});}const data=await upstream.json();const output=data.choices?.[0]?.message?.content;if(!output)return res.status(502).json({error:'No AI output returned.'});res.json({output});}catch{return res.status(502).json({error:'AI service temporarily unavailable.'});}
 });
 
+// Private Hugging Face chat: bearer authentication enforced server-side.
+const privateChatLimit=rateLimit({windowMs:60000,max:5});
+app.post('/api/admin/hf-chat',admin,privateChatLimit,async(req,res)=>{
+ res.set('Cache-Control','no-store');
+ if(process.env.AI_ENABLED!=='true'||!process.env.HF_TOKEN)return res.status(503).json({error:'Hugging Face chat is not configured.'});
+ const parsed=z.object({messages:z.array(z.object({role:z.enum(['user','assistant']),content:z.string().trim().min(1).max(4000)})).min(1).max(12)}).safeParse(req.body);
+ if(!parsed.success||parsed.data.messages.at(-1).role!=='user')return res.status(400).json({error:'Provide up to 12 valid chat messages ending with a user message.'});
+ try{
+ const upstream=await fetch('https://router.huggingface.co/v1/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+process.env.HF_TOKEN,'Content-Type':'application/json'},body:JSON.stringify({model:process.env.HF_MODEL||'deepseek-ai/DeepSeek-V4.1-Flash:cheapest',messages:[{role:'system',content:'You are a helpful private AI assistant. Never request secrets.'},...parsed.data.messages],max_tokens:1200}),signal:AbortSignal.timeout(45000)});
+ if(!upstream.ok){console.warn('Private Hugging Face status',upstream.status);return res.status(502).json({error:upstream.status===429?'Provider rate limit reached.':upstream.status===402?'Provider credits exhausted.':'Hugging Face provider unavailable.'});}
+ const data=await upstream.json();const output=data.choices?.[0]?.message?.content;
+ if(typeof output!=='string'||!output.trim())return res.status(502).json({error:'No chat response returned.'});
+ return res.json({output,provider:'Hugging Face'});
+ }catch{return res.status(502).json({error:'Chat service temporarily unavailable.'});}
+});
+
 // Serve crawler discovery files explicitly; never return the SPA HTML for these paths.
 for (const [route, filename, mime] of [
   ['/robots.txt', 'robots.txt', 'text/plain; charset=utf-8'],
