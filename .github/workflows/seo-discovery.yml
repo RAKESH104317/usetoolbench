@@ -1,0 +1,23 @@
+name: SEO discovery checks
+on:
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - 'scripts/check-seo.cjs'
+      - '.github/workflows/seo-discovery.yml'
+  workflow_dispatch:
+jobs:
+  seo:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm --prefix frontend ci --include=dev
+      - run: npm --prefix frontend run build
+      - run: node scripts/check-seo.cjs
