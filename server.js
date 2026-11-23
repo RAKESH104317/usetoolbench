@@ -64,6 +64,7 @@ app.post('/api/admin/hf-chat',admin,privateChatLimit,async(req,res)=>{
 
 // Serve crawler discovery files explicitly; never return the SPA HTML for these paths.
 for (const [route, filename, mime] of [
+  ['/ads.txt', 'ads.txt', 'text/plain; charset=utf-8'],
   ['/robots.txt', 'robots.txt', 'text/plain; charset=utf-8'],
   ['/sitemap.xml', 'sitemap.xml', 'application/xml; charset=utf-8']
 ]) {
