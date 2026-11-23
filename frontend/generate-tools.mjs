@@ -412,3 +412,14 @@ for(const p of seoPages){
  html=html.replace('</main>',faqHtml+'</main>').replace('</head>','<script type="application/ld+json">'+JSON.stringify(faqSchema).replace(/</g,'\\u003c')+'</script></head>');
  fs.writeFileSync(p.file,html);
 }
+
+// AdSense readiness: site-wide publisher tag and contact page
+const adsenseTag='<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6684294060994572" crossorigin="anonymous"></script>';
+const contactHtml='<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Contact | USETOOLBENCH</title><meta name="description" content="Contact information and support guidance for USETOOLBENCH tools."><link rel="canonical" href="https://usetoolbench.in/contact/"></head><body style="font:16px system-ui;max-width:760px;margin:40px auto;padding:20px;line-height:1.7"><nav><a href="/">Home</a> · <a href="/about/">About</a> · <a href="/privacy/">Privacy</a> · <a href="/terms/">Terms</a></nav><main><h1>Contact USETOOLBENCH</h1><p>For questions about our calculators, PDF utilities or learning resources, please use the project issue tracker to report bugs or request improvements.</p><p><a href="https://github.com/RAKESH104317/usetoolbench/issues">Open the support and issue tracker</a></p><p>Do not post passwords, personal documents, payment information or sensitive PDF contents in public issues.</p></main></body></html>';
+fs.mkdirSync(path.join(root,'contact'),{recursive:true});
+fs.writeFileSync(path.join(root,'contact','index.html'),contactHtml);
+fs.writeFileSync(path.join(root,'ads.txt'),'google.com, pub-6684294060994572, DIRECT, f08c47fec0942fa0\n');
+const walkAds=(dir)=>{for(const entry of fs.readdirSync(dir,{withFileTypes:true})){const full=path.join(dir,entry.name);if(entry.isDirectory())walkAds(full);else if(entry.name==='index.html'){let html=fs.readFileSync(full,'utf8');if(!html.includes('ca-pub-6684294060994572'))html=html.replace('</head>',adsenseTag+'</head>');if(full===path.join(root,'index.html'))html=html.replace('</footer>','<a href="/contact/">Contact</a></footer>');fs.writeFileSync(full,html);}}};
+walkAds(root);
+const sitemapPath=path.join(root,'sitemap.xml');
+if(fs.existsSync(sitemapPath)){let xml=fs.readFileSync(sitemapPath,'utf8');if(!xml.includes('/contact/'))xml=xml.replace('</urlset>','<url><loc>https://usetoolbench.in/contact/</loc></url></urlset>');fs.writeFileSync(sitemapPath,xml);}
