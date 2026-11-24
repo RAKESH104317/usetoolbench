@@ -446,4 +446,4 @@ const visitorHome=path.join(root,'index.html');let visitorHtml=fs.readFileSync(v
 
 // Remove public Deals links and sitemap entries after all generators finish.
 function hideDeals(dir){for(const e of fs.readdirSync(dir,{withFileTypes:true})){const p=path.join(dir,e.name);if(e.isDirectory()){if(e.name!=='deals')hideDeals(p)}else if(e.name==='index.html'){let h=fs.readFileSync(p,'utf8');h=h.replace(/<a\b[^>]*href=["']\/deals\/?["'][^>]*>[\s\S]*?<\/a>/gi,'');fs.writeFileSync(p,h)}}}hideDeals(root);
-const sitemapPath=path.join(root,'sitemap.xml');fs.writeFileSync(sitemapPath,fs.readFileSync(sitemapPath,'utf8').replace(/<url>\s*<loc>https:\/\/usetoolbench\.in\/deals\/?<\/loc>[\s\S]*?<\/url>/g,''));
+const dealsCleanupSitemapPath=path.join(root,'sitemap.xml');fs.writeFileSync(dealsCleanupSitemapPath,fs.readFileSync(dealsCleanupSitemapPath,'utf8').replace(/<url>\s*<loc>https:\/\/usetoolbench\.in\/deals\/?<\/loc>[\s\S]*?<\/url>/g,''));
