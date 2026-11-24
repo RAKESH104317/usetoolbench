@@ -1,9 +1,15 @@
 require('dotenv').config();const express=require('express');const cors=require('cors');const helmet=require('helmet');const rateLimit=require('express-rate-limit');const path=require('path'),fs=require('fs');const{Pool}=require('pg');const{z}=require('zod');
 const app=express(),port=Number(process.env.PORT||3000),pool=new Pool({connectionString:process.env.DATABASE_URL,ssl:process.env.DATABASE_URL&&!process.env.DATABASE_URL.includes('localhost')?{rejectUnauthorized:false}:false});
-app.use(helmet({contentSecurityPolicy:false}));app.use(cors({origin:true}));app.use(express.json({limit:'200kb'}));app.use(rateLimit({windowMs:60000,max:120}));
+app.disable('x-powered-by');
+app.use(helmet({contentSecurityPolicy:false}));
+app.use((req,res,next)=>{res.set('Permissions-Policy','camera=(), microphone=(), geolocation=()');next()});
+const allowedOrigins=new Set(['https://usetoolbench.in','https://www.usetoolbench.in','https://usetoolbench-deals.onrender.com','https://rakesh104317.github.io',...(process.env.CORS_ALLOWED_ORIGINS||'').split(',').map(x=>x.trim()).filter(Boolean)]);
+app.use(cors({origin:(origin,cb)=>cb(null,!origin||allowedOrigins.has(origin))}));
+app.use(express.json({limit:'200kb'}));app.use(rateLimit({windowMs:60000,max:120}));
+app.use('/api/admin',rateLimit({windowMs:60000,max:30}), (req,res,next)=>{res.set('Cache-Control','no-store');next()});
 const discount=d=>Math.max(0,Math.round((1-Number(d.current_price)/Number(d.original_price))*100));const map=d=>({...d,discount_percent:discount(d),saved_amount:Math.max(0,Number(d.original_price)-Number(d.current_price))});
 async function resolveOriginalImage(url){try{const r=await fetch(url,{redirect:"follow",headers:{"User-Agent":"Mozilla/5.0 (compatible; DealHubBot/1.0)"}});if(!r.ok)return null;const html=(await r.text()).slice(0,200000);const attrs=[/property=["']og:image["'][^>]*content=["']([^"']+)["']/i,/content=["']([^"']+)["'][^>]*property=["']og:image["']/i,/name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i,/content=["']([^"']+)["'][^>]*name=["']twitter:image["']/i];for(const re of attrs){const m=html.match(re);if(m&&m[1])return new URL(m[1],url).href}const json=[...html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\\s\\S]*?)<\/script>/gi)];for(const m of json){try{const j=JSON.parse(m[1]);const items=Array.isArray(j)?j:[j];for(const x of items){const im=x&&x.image;if(typeof im==="string")return new URL(im,url).href;if(Array.isArray(im)&&im[0])return new URL(typeof im[0]==="string"?im[0]:im[0].url,url).href;if(im&&im.url)return new URL(im.url,url).href}}catch{}}return null}catch{return null}}
-function admin(req,res,next){if(!process.env.ADMIN_TOKEN||req.headers.authorization!==`Bearer ${process.env.ADMIN_TOKEN}`)return res.status(401).json({error:'Unauthorized'});next()}
+function admin(req,res,next){const crypto=require('crypto');const expected=process.env.ADMIN_TOKEN;const supplied=req.headers.authorization||'';if(!expected||!crypto.timingSafeEqual(crypto.createHash('sha256').update(supplied).digest(),crypto.createHash('sha256').update('Bearer '+expected).digest()))return res.status(401).json({error:'Unauthorized'});next()}
 // PDF allowance: atomic daily reservation, no document upload.
 if(process.env.RENDER==='true')app.set('trust proxy',1);
 const pdfCrypto=require('crypto');
@@ -77,7 +83,9 @@ for (const [route, filename, mime] of [
     });
   });
 }
-app.use(express.static(path.join(__dirname,'frontend','dist')));
+app.use('/api',(req,res)=>res.status(404).json({error:'API route not found'}));
+app.use(express.static(path.join(__dirname,'frontend','dist'),{dotfiles:'deny'}));
 app.use((req,res)=>res.sendFile(path.join(__dirname,'frontend','dist','index.html')));
+app.use((err,req,res,next)=>{if(res.headersSent)return next(err);const status=err.status===413?413:err.status===400?400:500;res.status(status).json({error:status===413?'Request too large':status===400?'Invalid request':'Internal server error'});});
 async function init(){if(!process.env.DATABASE_URL){console.warn('DATABASE_URL not set; API will return database errors until configured.');return}const sql=fs.readFileSync(path.join(__dirname,'schema.sql'),'utf8');for(const statement of sql.split(';').map(x=>x.trim()).filter(Boolean))await pool.query(statement);}
 init().then(async()=>{if(process.env.DATABASE_URL&&process.env.ADMIN_TOKEN){await pool.query('CREATE TABLE IF NOT EXISTS pdf_daily_allowance (ip_hash text NOT NULL, day date NOT NULL, pages integer NOT NULL, PRIMARY KEY(ip_hash,day))');const client=await pool.connect();try{await client.query('BEGIN');const result=await client.query("INSERT INTO pdf_daily_allowance(ip_hash,day,pages) VALUES($1,CURRENT_DATE,1) ON CONFLICT(ip_hash,day) DO UPDATE SET pages=EXCLUDED.pages RETURNING pages",['startup-self-test']);if(result.rows[0]?.pages!==1)throw Error('PDF quota self-test failed');console.log('PDF quota database write self-test passed');}finally{try{await client.query('ROLLBACK')}finally{client.release()}}}else{console.warn('PDF quota configuration missing')}app.listen(port,()=>console.log('DealHub Deals on '+port))}).catch(e=>{console.error('Database initialization failed',e);process.exit(1)});
