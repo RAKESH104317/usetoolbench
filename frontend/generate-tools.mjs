@@ -423,3 +423,9 @@ const walkAds=(dir)=>{for(const entry of fs.readdirSync(dir,{withFileTypes:true}
 walkAds(root);
 const sitemapPath=path.join(root,'sitemap.xml');
 if(fs.existsSync(sitemapPath)){let xml=fs.readFileSync(sitemapPath,'utf8');if(!xml.includes('/contact/'))xml=xml.replace('</urlset>','<url><loc>https://usetoolbench.in/contact/</loc></url></urlset>');fs.writeFileSync(sitemapPath,xml);}
+
+/* Shared site favicon */
+const utFavicon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="#10233e"/><rect x="7" y="7" width="86" height="86" rx="16" fill="none" stroke="#60a5fa" stroke-width="2"/><text x="50" y="65" text-anchor="middle" font-size="43" font-weight="800" fill="white" font-family="Arial,sans-serif">UT</text></svg>';
+fs.writeFileSync(path.join(root,'favicon.svg'),utFavicon);
+function applyUtFavicon(dir){for(const e of fs.readdirSync(dir,{withFileTypes:true})){const p=path.join(dir,e.name);if(e.isDirectory())applyUtFavicon(p);else if(e.name==='index.html'){let h=fs.readFileSync(p,'utf8');h=h.replace(/<link\b[^>]*\brel=["'](?:shortcut )?icon["'][^>]*>/gi,'');h=h.replace('</head>','<link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.svg"></head>');fs.writeFileSync(p,h);}}}
+applyUtFavicon(root);
