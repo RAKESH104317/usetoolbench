@@ -83,6 +83,14 @@ for (const [route, filename, mime] of [
     });
   });
 }
+app.post('/api/contact',rateLimit({windowMs:3600000,max:5}),async(req,res)=>{
+res.set('Cache-Control','no-store');
+if(!allowedOrigins.has(req.headers.origin))return res.status(403).json({error:'Origin not allowed'});
+const p=z.object({name:z.string().trim().min(1).max(100),email:z.string().email().max(254),subject:z.enum(['General support','Report a bug','Suggest a tool','Other enquiry']),message:z.string().trim().min(1).max(2000)}).safeParse(req.body);
+if(!p.success)return res.status(400).json({error:'Invalid contact details'});
+if(!process.env.CONTACT_EMAIL||!process.env.RESEND_API_KEY||!process.env.CONTACT_FROM)return res.status(503).json({error:'Contact delivery not configured'});
+try{const d=p.data;const r=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+process.env.RESEND_API_KEY,'Content-Type':'application/json'},body:JSON.stringify({from:process.env.CONTACT_FROM,to:[process.env.CONTACT_EMAIL],reply_to:d.email,subject:'USETOOLBENCH: '+d.subject,text:'Name: '+d.name+'\nEmail: '+d.email+'\n\n'+d.message}),signal:AbortSignal.timeout(15000)});if(!r.ok)return res.status(502).json({error:'Delivery unavailable'});return res.json({ok:true})}catch{return res.status(502).json({error:'Delivery unavailable'})}
+});
 app.use('/api',(req,res)=>res.status(404).json({error:'API route not found'}));
 app.use(express.static(path.join(__dirname,'frontend','dist'),{dotfiles:'deny'}));
 app.use((req,res)=>res.sendFile(path.join(__dirname,'frontend','dist','index.html')));
