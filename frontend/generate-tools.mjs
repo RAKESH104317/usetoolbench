@@ -518,3 +518,36 @@ const e=id=>document.getElementById(id), cats=['Corporate','Creative','Medical',
  fs.writeFileSync(path.join(root,'sitemap.xml'),xml);
  fs.writeFileSync(path.join(root,'robots.txt'),'User-agent: *\nAllow: /\nDisallow: /admin\nSitemap: '+origin+'/sitemap.xml\n');
 }
+
+
+// Final public-page metadata coverage and build-time SEO audit.
+{
+ const origin='https://usetoolbench.in';
+ const report=[];
+ const clean=s=>s.replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim();
+ const escapeAttr=s=>s.replace(/&(?!(?:amp|quot|lt|gt|#\d+);)/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+ const walk=dir=>{for(const e of fs.readdirSync(dir,{withFileTypes:true})){
+ const f=path.join(dir,e.name);
+ if(e.isDirectory()){walk(f);continue;}
+ if(e.name!=='index.html')continue;
+ const slug=path.relative(root,dir).split(path.sep).join('/');
+ let h=fs.readFileSync(f,'utf8');
+ if(/^(admin|deals)(\/|$)/i.test(slug)||/<meta\b[^>]*name=["']robots["'][^>]*content=["'][^"']*noindex/i.test(h))continue;
+ if(!/<\/head>/i.test(h))continue;
+ const url=origin+'/'+(slug?slug+'/':'');
+ const heading=clean(h.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1]||'');
+ const title=clean(h.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1]||((heading||slug.split('/').pop()?.replace(/-/g,' ')||'Free online tools')+' | USETOOLBENCH'));
+ if(!/<title\b/i.test(h))h=h.replace(/<\/head>/i,'<title>'+escapeAttr(title)+'</title></head>');
+ const existing=h.match(/<meta\b[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i)?.[1];
+ const paragraph=clean(h.match(/<p\b[^>]*>([\s\S]*?)<\/p>/i)?.[1]||'');
+ const description=existing||((paragraph.length>=40?paragraph:(heading||title.replace(/\s*\|\s*USETOOLBENCH/i,''))+' — explore this resource on USETOOLBENCH.')).slice(0,160);
+ const meta=(key,value,property=false)=>{const attr=property?'property':'name';const re=new RegExp('<meta\\b[^>]*'+attr+'=["\\x27]'+key+'["\\x27][^>]*>','gi');h=h.replace(re,'').replace(/<\/head>/i,'<meta '+attr+'="'+key+'" content="'+escapeAttr(value)+'"></head>');};
+ meta('description',description);meta('og:title',title,true);meta('og:description',description,true);meta('og:url',url,true);meta('og:type','website',true);meta('twitter:card','summary');meta('twitter:title',title);meta('twitter:description',description);
+ if(!/application\/ld\+json/i.test(h)){const schema={'@context':'https://schema.org','@type':'WebPage',name:title,url,description,isPartOf:{'@type':'WebSite',name:'USETOOLBENCH',url:origin+'/'}};h=h.replace(/<\/head>/i,'<script type="application/ld+json">'+JSON.stringify(schema).replace(/</g,'\\u003c')+'</script></head>');}
+ fs.writeFileSync(f,h);
+ report.push({url,title,description,missingH1:!heading,imagesMissingAlt:(h.match(/<img\b(?![^>]*\balt\s*=)[^>]*>/gi)||[]).length});
+ }};
+ walk(root);
+ const duplicates=key=>Object.entries(report.reduce((a,p)=>{(a[p[key]]??=[]).push(p.url);return a},Object.create(null))).filter(([,v])=>v.length>1);
+ console.log('SEO audit:',JSON.stringify({pages:report.length,duplicateTitles:duplicates('title'),duplicateDescriptions:duplicates('description'),missingH1:report.filter(p=>p.missingH1).map(p=>p.url),missingImageAlt:report.filter(p=>p.imagesMissingAlt).map(p=>({url:p.url,count:p.imagesMissingAlt}))}));
+}
