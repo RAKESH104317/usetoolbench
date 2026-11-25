@@ -58,7 +58,26 @@ app.post('/api/ai',rateLimit({windowMs:60000,max:3}),async(req,res)=>{
  const cap=Math.min(100,Math.max(1,Number(process.env.AI_DAILY_LIMIT)||20));if(aiCount>=cap)return res.status(429).json({error:'Daily AI limit reached.'});aiCount++;
  const messages=[{role:'system',content:aiModes[p.data.mode]+'. Do not invent facts or request secrets.'},{role:'user',content:p.data.input}];
  for(const provider of aiProviders()){
- try{const upstream=await fetch(provider.url,{method:'POST',headers:{Authorization:'Bearer '+provider.key,'Content-Type':'application/json'},body:JSON.stringify({model:provider.model,messages,max_tokens:1500}),signal:AbortSignal.timeout(12000)});if(!upstream.ok){console.warn('AI provider status',provider.name,upstream.status);continue}const data=await upstream.json();const output=data.choices?.[0]?.message?.content;if(typeof output==='string'&&output.trim())return res.json({output});}catch{console.warn('AI provider unavailable',provider.name)}
+ try{
+  let models=[provider.model];
+  if(provider.name==='Gemini'){
+   // Never guess a model name: discover those accessible to this specific API key.
+   const catalog=await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000',{headers:{'x-goog-api-key':provider.key},signal:AbortSignal.timeout(10000)});
+   if(catalog.ok){
+    const payload=await catalog.json();
+    const available=(payload.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>m.name.replace(/^models\//,''));
+    const preferred=available.filter(m=>/^gemini-/.test(m)&&/flash/i.test(m)&&!/image|audio|tts|live|preview-tts/i.test(m));
+    models=[...new Set([...preferred.sort((a,b)=>Number(/lite/i.test(b))-Number(/lite/i.test(a))),...available.filter(m=>/^gemini-/.test(m))])].slice(0,5);
+    if(!models.length){console.warn('Gemini: no generation models available');continue;}
+   }else{console.warn('Gemini model discovery status',catalog.status);}
+  }
+  for(const model of models){
+   const upstream=await fetch(provider.url,{method:'POST',headers:{Authorization:'Bearer '+provider.key,'Content-Type':'application/json'},body:JSON.stringify({model,messages,max_tokens:1500}),signal:AbortSignal.timeout(15000)});
+   if(!upstream.ok){console.warn('AI provider status',provider.name,model,upstream.status);if(provider.name==='Gemini'&&[400,404].includes(upstream.status))continue;break;}
+   const data=await upstream.json();const output=data.choices?.[0]?.message?.content;
+   if(typeof output==='string'&&output.trim())return res.json({output});
+  }
+ }catch(e){console.warn('AI provider unavailable',provider.name,e?.name||'request error')}
  }
  return res.status(503).json({error:'All configured AI providers are currently unavailable or out of quota. Please try again later.'});
 });
