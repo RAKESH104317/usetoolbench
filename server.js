@@ -42,14 +42,25 @@ app.patch('/api/admin/deals/:id',admin,async(req,res)=>{const keys=['name','bran
 app.delete('/api/admin/deals/:id',admin,async(req,res)=>{await pool.query('DELETE FROM deals WHERE id=$1',[req.params.id]);res.status(204).end()});app.get('/api/admin/price-history/:id',admin,async(req,res)=>res.json((await pool.query('SELECT * FROM price_history WHERE deal_id=$1 ORDER BY checked_at DESC',[req.params.id])).rows));app.get('/api/admin/notifications',admin,async(req,res)=>res.json((await pool.query('SELECT * FROM notification_logs ORDER BY created_at DESC LIMIT 100')).rows));
 
 const aiModes={coding:'Help write and debug programming code; explain assumptions and include safe examples',email:'Draft a professional email',writing:'Draft clear professional writing',grammar:'Correct grammar while preserving meaning',summary:'Summarize the supplied text accurately',sql:'Generate SQL Server SELECT queries; explain assumptions and never execute queries',sap:'Explain SAP Business One workflows and SQL Server troubleshooting; flag uncertainty and recommend testing in a sandbox',excel:'Suggest Excel formulas and explain cell references',resume:'Draft resume content without inventing experience'};
+// Enable alternative providers only with explicitly configured free-tier credentials.
+function aiProviders(){const e=process.env;return [
+{name:'Groq',key:e.GROQ_API_KEY,url:'https://api.groq.com/openai/v1/chat/completions',model:'openai/gpt-oss-20b'},
+{name:'Gemini',key:e.GEMINI_API_KEY,url:'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',model:e.GEMINI_FREE_MODEL},
+{name:'OpenRouter',key:e.OPENROUTER_API_KEY,url:'https://openrouter.ai/api/v1/chat/completions',model:'openrouter/free'},
+{name:'Hugging Face',key:e.HF_TOKEN,url:'https://router.huggingface.co/v1/chat/completions',model:e.HF_MODEL||'deepseek-ai/DeepSeek-V4.1-Flash:cheapest'}
+].filter(p=>p.key&&p.model)}
 let aiDay='',aiCount=0;
 app.post('/api/ai',rateLimit({windowMs:60000,max:3}),async(req,res)=>{
- if(process.env.AI_ENABLED!=='true'||!process.env.HF_TOKEN)return res.status(503).json({error:'AI service is not enabled yet.'});
+ if(process.env.AI_ENABLED!=='true'||!aiProviders().length)return res.status(503).json({error:'AI service is not enabled yet.'});
  const p=z.object({mode:z.enum(['email','writing','grammar','summary','sql','sap','excel','resume','coding']),input:z.string().trim().min(1).max(4000)}).safeParse(req.body);
  if(!p.success)return res.status(400).json({error:'Choose a tool and enter 1–4000 characters.'});
  const day=new Date().toISOString().slice(0,10);if(day!==aiDay){aiDay=day;aiCount=0;}
  const cap=Math.min(100,Math.max(1,Number(process.env.AI_DAILY_LIMIT)||20));if(aiCount>=cap)return res.status(429).json({error:'Daily AI limit reached.'});aiCount++;
- try{const upstream=await fetch('https://router.huggingface.co/v1/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+process.env.HF_TOKEN,'Content-Type':'application/json'},body:JSON.stringify({model:process.env.HF_MODEL||'deepseek-ai/DeepSeek-V4.1-Flash:cheapest',messages:[{role:'system',content:aiModes[p.data.mode]+'. Do not invent facts or request secrets.'},{role:'user',content:p.data.input}],max_tokens:1500}),signal:AbortSignal.timeout(45000)});if(!upstream.ok){console.warn('Hugging Face inference status',upstream.status);return res.status(502).json({error:upstream.status===429?'AI provider rate limit reached.':upstream.status===402?'AI provider credits exhausted.':'AI provider unavailable.'});}const data=await upstream.json();const output=data.choices?.[0]?.message?.content;if(!output)return res.status(502).json({error:'No AI output returned.'});res.json({output});}catch{return res.status(502).json({error:'AI service temporarily unavailable.'});}
+ const messages=[{role:'system',content:aiModes[p.data.mode]+'. Do not invent facts or request secrets.'},{role:'user',content:p.data.input}];
+ for(const provider of aiProviders()){
+ try{const upstream=await fetch(provider.url,{method:'POST',headers:{Authorization:'Bearer '+provider.key,'Content-Type':'application/json'},body:JSON.stringify({model:provider.model,messages,max_tokens:1500}),signal:AbortSignal.timeout(12000)});if(!upstream.ok){console.warn('AI provider status',provider.name,upstream.status);continue}const data=await upstream.json();const output=data.choices?.[0]?.message?.content;if(typeof output==='string'&&output.trim())return res.json({output});}catch{console.warn('AI provider unavailable',provider.name)}
+ }
+ return res.status(503).json({error:'All configured AI providers are currently unavailable or out of quota. Please try again later.'});
 });
 
 // Private Hugging Face chat: bearer authentication enforced server-side.
