@@ -484,3 +484,37 @@ const e=id=>document.getElementById(id), cats=['Corporate','Creative','Medical',
 
 // Ensure new tools remain visible even when the landing page has no main element.
 {const f=path.join(root,'index.html');let h=fs.readFileSync(f,'utf8');const links='<section id="new-conversion-tools" style="max-width:1100px;margin:24px auto;padding:20px"><h2>Image and document tools</h2><div style="display:flex;flex-wrap:wrap;gap:16px"><a href="/jpg-to-word/">JPG to Word</a><a href="/photo-to-text/">Photo to Text</a><a href="/document-scanner/">Document Scanner</a><a href="/visiting-card-maker/">Visiting Card Maker</a></div></section>';h=h.replace(/<\/body>/i,links+'</body>');fs.writeFileSync(f,h);}
+
+
+// Final SEO normalization after every tool generator has finished.
+{
+ const origin='https://usetoolbench.in';
+ const urls=new Set();
+ const descriptions={
+ 'jpg-to-word':'Extract text from JPG images with browser OCR and download an editable Word document. Review recognition results before saving.',
+ 'photo-to-text':'Extract editable text from photos using browser OCR and download a text file.',
+ 'document-scanner':'Combine document photos into an image-based PDF with optional grayscale conversion.',
+ 'visiting-card-maker':'Create a visiting card with custom contact details, logo and design. Export PNG, JPG or actual-size PDF.'
+ };
+ const walk=dir=>{for(const entry of fs.readdirSync(dir,{withFileTypes:true})){
+ const file=path.join(dir,entry.name);
+ if(entry.isDirectory()){walk(file);continue;}
+ if(entry.name!=='index.html')continue;
+ const slug=path.relative(root,dir).split(path.sep).join('/');
+ if(/^(admin|deals)(\/|$)/i.test(slug))continue;
+ let html=fs.readFileSync(file,'utf8');
+ if(/<meta\b[^>]*name=["']robots["'][^>]*content=["'][^"']*noindex/i.test(html))continue;
+ const url=origin+'/'+(slug?slug+'/':'');
+ if(!/<\/head>/i.test(html))continue;
+ html=html.replace(/<link\b[^>]*rel=["']canonical["'][^>]*>/gi,'').replace(/<\/head>/i,'<link rel="canonical" href="'+url+'"></head>');
+ if(descriptions[slug]){
+ html=html.replace(/<meta\b[^>]*name=["']description["'][^>]*>/gi,'').replace(/<\/head>/i,'<meta name="description" content="'+descriptions[slug]+'"></head>');
+ }
+ fs.writeFileSync(file,html);
+ urls.add(url);
+ }};
+ walk(root);
+ const xml='<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'+[...urls].sort().map(u=>'<url><loc>'+u.replace(/&/g,'&amp;')+'</loc></url>').join('\n')+'\n</urlset>\n';
+ fs.writeFileSync(path.join(root,'sitemap.xml'),xml);
+ fs.writeFileSync(path.join(root,'robots.txt'),'User-agent: *\nAllow: /\nDisallow: /admin\nSitemap: '+origin+'/sitemap.xml\n');
+}
