@@ -44,8 +44,8 @@ app.delete('/api/admin/deals/:id',admin,async(req,res)=>{await pool.query('DELET
 const aiModes={coding:'Help write and debug programming code; explain assumptions and include safe examples',email:'Draft a professional email',writing:'Draft clear professional writing',grammar:'Correct grammar while preserving meaning',summary:'Summarize the supplied text accurately',sql:'Generate SQL Server SELECT queries; explain assumptions and never execute queries',sap:'Explain SAP Business One workflows and SQL Server troubleshooting; flag uncertainty and recommend testing in a sandbox',excel:'Suggest Excel formulas and explain cell references',resume:'Draft resume content without inventing experience'};
 // Enable alternative providers only with explicitly configured free-tier credentials.
 function aiProviders(){const e=process.env;return [
+{name:'Gemini',key:e.GEMINI_API_KEY,url:'https://generativelanguage.googleapis.com/v1beta/models',model:e.GEMINI_FREE_MODEL||'gemini-2.5-flash-lite'},
 {name:'Groq',key:e.GROQ_API_KEY,url:'https://api.groq.com/openai/v1/chat/completions',model:'openai/gpt-oss-20b'},
-{name:'Gemini',key:e.GEMINI_API_KEY,url:'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',model:e.GEMINI_FREE_MODEL},
 {name:'OpenRouter',key:e.OPENROUTER_API_KEY,url:'https://openrouter.ai/api/v1/chat/completions',model:'openrouter/free'},
 {name:'Hugging Face',key:e.HF_TOKEN,url:'https://router.huggingface.co/v1/chat/completions',model:e.HF_MODEL||'deepseek-ai/DeepSeek-V4.1-Flash:cheapest'}
 ].filter(p=>p.key&&p.model)}
@@ -61,20 +61,24 @@ app.post('/api/ai',rateLimit({windowMs:60000,max:3}),async(req,res)=>{
  try{
   let models=[provider.model];
   if(provider.name==='Gemini'){
-   // Never guess a model name: discover those accessible to this specific API key.
    const catalog=await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000',{headers:{'x-goog-api-key':provider.key},signal:AbortSignal.timeout(10000)});
    if(catalog.ok){
     const payload=await catalog.json();
-    const available=(payload.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>m.name.replace(/^models\//,''));
-    const preferred=available.filter(m=>/^gemini-/.test(m)&&/flash/i.test(m)&&!/image|audio|tts|live|preview-tts/i.test(m));
-    models=[...new Set([...preferred.sort((a,b)=>Number(/lite/i.test(b))-Number(/lite/i.test(a))),...available.filter(m=>/^gemini-/.test(m))])].slice(0,5);
-    if(!models.length){console.warn('Gemini: no generation models available');continue;}
-   }else{console.warn('Gemini model discovery status',catalog.status);}
+    const available=(payload.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>m.name.replace(/^models\\//,''));
+    const flash=available.filter(m=>/^gemini-/.test(m)&&/flash/i.test(m)&&!/image|audio|tts|live/i.test(m));
+    models=[...new Set([...flash.sort((a,b)=>Number(/lite/i.test(b))-Number(/lite/i.test(a))),...available.filter(m=>/^gemini-/.test(m))])].slice(0,5);
+    if(!models.length){console.warn('Gemini no accessible text models');continue;}
+   }else{console.warn('Gemini discovery HTTP',catalog.status);continue;}
   }
   for(const model of models){
-   const upstream=await fetch(provider.url,{method:'POST',headers:{Authorization:'Bearer '+provider.key,'Content-Type':'application/json'},body:JSON.stringify({model,messages,max_tokens:1500}),signal:AbortSignal.timeout(15000)});
-   if(!upstream.ok){console.warn('AI provider status',provider.name,model,upstream.status);if(provider.name==='Gemini'&&[400,404].includes(upstream.status))continue;break;}
-   const data=await upstream.json();const output=data.choices?.[0]?.message?.content;
+   const isGemini=provider.name==='Gemini';
+   const url=isGemini?provider.url+'/'+encodeURIComponent(model)+':generateContent':provider.url;
+   const body=isGemini?{contents:[{role:'user',parts:[{text:messages.map(m=>m.content).join('\\n\\n')}]}],generationConfig:{maxOutputTokens:1500}}:{model,messages,max_tokens:1500};
+   const headers=isGemini?{'x-goog-api-key':provider.key,'Content-Type':'application/json'}:{Authorization:'Bearer '+provider.key,'Content-Type':'application/json'};
+   const upstream=await fetch(url,{method:'POST',headers,body:JSON.stringify(body),signal:AbortSignal.timeout(15000)});
+   if(!upstream.ok){console.warn('AI provider status',provider.name,model,upstream.status);if(isGemini&&[400,404].includes(upstream.status))continue;break;}
+   const data=await upstream.json();
+   const output=isGemini?data.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join(''):data.choices?.[0]?.message?.content;
    if(typeof output==='string'&&output.trim())return res.json({output});
   }
  }catch(e){console.warn('AI provider unavailable',provider.name,e?.name||'request error')}
