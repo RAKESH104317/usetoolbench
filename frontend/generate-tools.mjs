@@ -551,3 +551,28 @@ const e=id=>document.getElementById(id), cats=['Corporate','Creative','Medical',
  const duplicates=key=>Object.entries(report.reduce((a,p)=>{(a[p[key]]??=[]).push(p.url);return a},Object.create(null))).filter(([,v])=>v.length>1);
  console.log('SEO audit:',JSON.stringify({pages:report.length,duplicateTitles:duplicates('title'),duplicateDescriptions:duplicates('description'),missingH1:report.filter(p=>p.missingH1).map(p=>p.url),missingImageAlt:report.filter(p=>p.imagesMissingAlt).map(p=>({url:p.url,count:p.imagesMissingAlt}))}));
 }
+
+
+// Validate generated sitemap destinations and local navigation at build time.
+{
+ const origin='https://usetoolbench.in';
+ const sitemap=fs.readFileSync(path.join(root,'sitemap.xml'),'utf8');
+ const urls=[...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m=>m[1]);
+ const errors=[],broken=[];
+ const exists=u=>{const p=path.resolve(root,'.'+decodeURIComponent(u.pathname));if(p!==path.resolve(root)&&!p.startsWith(path.resolve(root)+path.sep))return false;return fs.existsSync(p)&&(fs.statSync(p).isFile()||fs.existsSync(path.join(p,'index.html')));};
+ if(!urls.length||new Set(urls).size!==urls.length)errors.push('Empty or duplicate sitemap');
+ for(const loc of urls){
+ const u=new URL(loc);
+ if(u.origin!==origin||!exists(u)){errors.push('Invalid sitemap destination: '+loc);continue;}
+ const f=path.join(root,decodeURIComponent(u.pathname),'index.html');
+ if(!fs.existsSync(f)){errors.push('Missing index: '+loc);continue;}
+ const h=fs.readFileSync(f,'utf8');
+ const canon=[...h.matchAll(/<link\b[^>]*rel=["']canonical["'][^>]*href=["']([^"']+)["'][^>]*>/gi)];
+ if(canon.length!==1||canon[0][1]!==loc)errors.push('Canonical mismatch: '+loc);
+ for(const m of h.matchAll(/<a\b[^>]*href=["']([^"']+)["']/gi)){
+ try{const dest=new URL(m[1],loc);if(dest.origin===origin&&!exists(dest))broken.push({page:loc,link:m[1]});}catch{}
+ }
+ }
+ console.log('SEO link audit:',JSON.stringify({sitemapPages:urls.length,errors,brokenLinks:broken}));
+ if(errors.length)throw new Error('SEO sitemap validation failed: '+errors.join('; '));
+}
