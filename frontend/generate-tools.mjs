@@ -661,3 +661,14 @@ fs.writeFileSync(f,h);
 }
 
 {const f=path.join(root,'index.html');let h=fs.readFileSync(f,'utf8');h=h.replace('</head>','<style>.globe-selection-caption:empty{display:none!important}.ai-world button{display:none!important}</style></head>');fs.writeFileSync(f,h);}
+
+/* Targeted search-intent metadata v1 */
+{
+ const targets={"gst-calculator":["GST Calculator India – Calculate GST Online","Calculate inclusive and exclusive GST amounts in India using a free online GST calculator."],"emi-calculator":["EMI Calculator India – Loan EMI Online","Estimate monthly loan EMI using principal, annual interest rate and loan tenure."],"sip-calculator":["SIP Calculator India – Mutual Fund SIP Returns","Estimate future SIP investment value using monthly investment, assumed returns and duration."],"learn/sap-b1":["SAP Business One Tutorial – SAP B1 Training","Learn SAP Business One 10.0, purchasing, sales, inventory, production, accounting entries and SQL Server queries."],"learn/sap-b1/sql-practice":["SAP B1 SQL Queries – Online SQL Practice Playground","Practice read-only SQL SELECT queries using sample SAP Business One tables and practical business examples."],"learn/sap-b1/purchase-cycle":["SAP B1 Purchase Cycle – PR, PO, GRPO and AP Invoice","Learn SAP Business One purchasing document flow and debit and credit accounting entries from purchase request to payment."],"learn/sap-b1/sales-cycle":["SAP B1 Sales Cycle – Quotation to Incoming Payment","Learn SAP Business One sales order, delivery, AR invoice and incoming payment with accounting entries."]};
+ for(const [slug,[title,description]] of Object.entries(targets)){
+ const file=path.join(root,slug,'index.html');if(!fs.existsSync(file))continue;
+ let html=fs.readFileSync(file,'utf8');const name=title+' | USETOOLBENCH';
+ html=html.replace(/<title>[^<]*<\/title>/i,'<title>'+escSEO(name)+'</title>').replace(/<meta\s+(?:name="(?:description|twitter:title|twitter:description)"|property="og:(?:title|description)")[^>]*>/gi,'').replace(/<\/head>/i,'<meta name="description" content="'+escSEO(description)+'"><meta property="og:title" content="'+escSEO(name)+'"><meta property="og:description" content="'+escSEO(description)+'"><meta name="twitter:title" content="'+escSEO(name)+'"><meta name="twitter:description" content="'+escSEO(description)+'"></head>');
+ fs.writeFileSync(file,html);
+ }
+}
