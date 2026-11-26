@@ -661,3 +661,11 @@ fs.writeFileSync(f,h);
 }
 
 {const f=path.join(root,'index.html');let h=fs.readFileSync(f,'utf8');h=h.replace('</head>','<style>.globe-selection-caption:empty{display:none!important}.ai-world button{display:none!important}</style></head>');fs.writeFileSync(f,h);}
+
+ // Ensure late-generated public tools have the same robots preview policy as other public tools.
+ for (const slug of ['contact','document-scanner','jpg-to-word','photo-to-text','visiting-card-maker']) {
+   const file=path.join(root,slug,'index.html');
+   let html=fs.readFileSync(file,'utf8');
+   if (!/<meta\s+name=["']robots["']/i.test(html)) html=html.replace('</head>','<meta name="robots" content="index,follow,max-image-preview:large"></head>');
+   fs.writeFileSync(file,html);
+ }
