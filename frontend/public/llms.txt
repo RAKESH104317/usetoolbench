@@ -1,0 +1,21 @@
+# USETOOLBENCH
+
+> Free online productivity tools, Indian financial calculators, document utilities and SAP Business One learning resources.
+
+## Tools
+- [All tools](https://usetoolbench.in/tools/): Browse available utilities.
+- [PDF tools](https://usetoolbench.in/pdf-tools/): PDF editing and document utilities.
+- [GST calculator](https://usetoolbench.in/gst-calculator/): Estimate Indian GST.
+- [EMI calculator](https://usetoolbench.in/emi-calculator/): Estimate loan installments.
+- [SIP calculator](https://usetoolbench.in/sip-calculator/): Estimate investment outcomes.
+
+## Learning
+- [SAP Business One training](https://usetoolbench.in/learn/sap-b1/): SAP B1 modules and business processes.
+- [SAP B1 SQL practice](https://usetoolbench.in/learn/sap-b1/sql-practice/): Practice read-only SQL queries.
+
+## Reference
+- [Sitemap](https://usetoolbench.in/sitemap.xml)
+- [Privacy](https://usetoolbench.in/privacy/)
+- [Terms](https://usetoolbench.in/terms/)
+
+Financial estimates are informational. Tool availability and limits may vary. Private administration routes are not included.
