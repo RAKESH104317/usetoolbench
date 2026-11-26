@@ -64,7 +64,7 @@ app.post('/api/ai',rateLimit({windowMs:60000,max:3}),async(req,res)=>{
    const catalog=await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000',{headers:{'x-goog-api-key':provider.key},signal:AbortSignal.timeout(10000)});
    if(catalog.ok){
     const payload=await catalog.json();
-    const available=(payload.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>m.name.replace(/^models\\//,''));
+    const available=(payload.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>m.name.startsWith('models/') ? m.name.slice(7) : m.name);
     const flash=available.filter(m=>/^gemini-/.test(m)&&/flash/i.test(m)&&!/image|audio|tts|live/i.test(m));
     models=[...new Set([...flash.sort((a,b)=>Number(/lite/i.test(b))-Number(/lite/i.test(a))),...available.filter(m=>/^gemini-/.test(m))])].slice(0,5);
     if(!models.length){console.warn('Gemini no accessible text models');continue;}
