@@ -118,16 +118,16 @@ jobs:
           try {
             const page=await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'no-preference'});
             await page.goto('http://localhost:8766/',{waitUntil:'domcontentloaded'});
-            const nova=page.locator('.nova-pet');
+            const nova=page.locator('#nova-static');
             await nova.waitFor({state:'visible',timeout:20000});
-            const pos=()=>nova.evaluate(el=>({x:parseFloat(el.style.left),y:parseFloat(el.style.top)}));
+            const pos=()=>nova.evaluate(el=>({x:parseFloat(getComputedStyle(el).left),y:parseFloat(getComputedStyle(el).top)}));
             const before=await pos();
-            await page.waitForFunction(p=>{const el=document.querySelector('.nova-pet');return el&&(parseFloat(el.style.left)!==p.x||parseFloat(el.style.top)!==p.y)},before,{timeout:5000});
+            await page.waitForFunction(p=>{const el=document.querySelector('#nova-static');return el&&((el.style.left!==''&&parseFloat(el.style.left)!==p.x)||(el.style.top!==''&&parseFloat(el.style.top)!==p.y))},before,{timeout:5000});
             const after=await pos();
             assert.ok(after.x>=20&&after.x<=1420&&after.y>=24&&after.y<=876);
             await page.mouse.click(350,300);
-            await page.waitForFunction(()=>{const el=document.querySelector('.nova-pet');return el&&parseFloat(el.style.left)===350&&parseFloat(el.style.top)===300});
-            await page.waitForFunction(()=>{const el=document.querySelector('.nova-pet');return el&&(parseFloat(el.style.left)!==350||parseFloat(el.style.top)!==300)},null,{timeout:5000});
+            await page.waitForFunction(()=>{const el=document.querySelector('#nova-static');return el&&parseFloat(el.style.left)===350&&parseFloat(el.style.top)===300});
+            await page.waitForFunction(()=>{const el=document.querySelector('#nova-static');return el&&(parseFloat(el.style.left)!==350||parseFloat(el.style.top)!==300)},null,{timeout:5000});
             console.log('NOVA desktop autonomous movement and click resume passed');
           } finally {await browser.close()}
           JS
