@@ -672,3 +672,10 @@ fs.writeFileSync(f,h);
  fs.writeFileSync(file,html);
  }
 }
+
+/* Restore large image preview directives on late-generated public pages. */
+for(const slug of ['contact','document-scanner','jpg-to-word','photo-to-text','visiting-card-maker']){
+ const file=path.join(root,slug,'index.html');if(!fs.existsSync(file))continue;
+ let html=fs.readFileSync(file,'utf8');if(/<meta\b[^>]*name=["']robots["'][^>]*content=["'][^"']*noindex/i.test(html))continue;
+ html=html.replace(/<meta\b[^>]*name=["']robots["'][^>]*>/gi,'').replace(/<\/head>/i,'<meta name="robots" content="index,follow,max-image-preview:large"></head>');fs.writeFileSync(file,html);
+}
